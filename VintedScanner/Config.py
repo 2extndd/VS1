@@ -74,6 +74,19 @@ topics = {
         }
     },
 
+    "Maison Margiela + mm6": {
+        "thread_id":1278,  # ID топика для Maison Margiela + mm6
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 
+            'brand_ids': '639289,,
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+
 
 
     # Добавьте другие типы вещей и топики по аналогии
