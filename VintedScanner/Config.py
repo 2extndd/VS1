@@ -87,6 +87,18 @@ topics = {
         }
     },
 
+    "Raf Simons + ALL": {
+        "thread_id":1351,  # ID топика для Raf Simons + ALL
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '4000998, 543679, 184436', 
+            'brand_ids': '639289',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
 
 
     # Добавьте другие типы вещей и топики по аналогии
