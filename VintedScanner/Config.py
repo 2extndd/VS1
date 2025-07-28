@@ -80,7 +80,7 @@ topics = {
             'page': '1',
             'per_page': '10',
             'search_text': '',
-            'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 
+            'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 4 - женские вещи, 1231 - мужские обувь
             'brand_ids': '639289',
             'order': 'newest_first',
             'price_to': '100',
@@ -93,8 +93,8 @@ topics = {
             'page': '1',
             'per_page': '10',
             'search_text': '',
-            'catalog_ids': '4000998, 543679, 184436', 
-            'brand_ids': '639289',
+            'catalog_ids': '', 
+            'brand_ids': '4000998, 543679, 184436',
             'order': 'newest_first',
             'price_to': '100',
         }
