@@ -6,7 +6,6 @@ import Config
 import json
 import time
 
-
 RESTART_FLAG = "bot_restarted.flag"
 
 def get_last_items():
@@ -58,7 +57,7 @@ async def delete_old(update, context):
 
 async def restart(update, context):
     await update.message.reply_text("Перезапуск скрипта...")
-    # Очищаем vinted_items.txt
+    # Очищаем vinted_items.txt только при /restart
     with open("vinted_items.txt", "w") as f:
         f.write("")
     # Флаг для перезапуска
