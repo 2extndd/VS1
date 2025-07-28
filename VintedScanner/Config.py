@@ -81,7 +81,7 @@ topics = {
             'per_page': '10',
             'search_text': '',
             'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 
-            'brand_ids': '639289,,
+            'brand_ids': '639289',
             'order': 'newest_first',
             'price_to': '100',
         }
