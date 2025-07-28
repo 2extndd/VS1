@@ -54,7 +54,7 @@ topics = {
             'page': '1',
             'per_page': '10',
             'search_text': '',
-            'catalog_ids': '',
+            'catalog_ids': '2050,1231,4,16',
             'brand_ids': '3573',
             'order': 'newest_first',
             'price_to': '1000',
