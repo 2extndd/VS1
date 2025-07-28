@@ -71,16 +71,16 @@ async def status(update, context):
 async def threadid(update, context):
     await update.message.reply_text(f"thread_id: {update.message.message_thread_id}")
 
+async def send_log(update, context):
+    log_file = "vinted_scanner.log"
+    if os.path.exists(log_file):
+        await update.message.reply_document(document=open(log_file, "rb"))
+    else:
+        await update.message.reply_text("Файл логов не найден.")
+
 async def notify_start(application):
     await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот запущен!")
-    # После рестарта отправляем все вещи из last_items.json
-    items = get_last_items()
-    for item in items:
-        await application.bot.send_photo(
-            chat_id=Config.telegram_chat_id,
-            photo=item["image"],
-            caption=f"{item['title']}\n{item['price']}\n{item['url']}"
-        )
+    # НЕ отправляем все вещи из last_items.json при обычном запуске!
     if os.path.exists(RESTART_FLAG):
         await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот перезапущен!")
         logging.info("=== VintedScanner script was restarted by Telegram command ===")
@@ -93,6 +93,7 @@ def main():
     application.add_handler(CommandHandler('delete_old', delete_old))
     application.add_handler(CommandHandler('threadid', threadid))
     application.add_handler(CommandHandler('restart', restart))
+    application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
     application.post_init = notify_start
     application.run_polling()
 
