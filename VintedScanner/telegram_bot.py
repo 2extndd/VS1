@@ -6,11 +6,6 @@ import Config
 import json
 import time
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s",
-    handlers=[
-        logging.StreamHandler(sys.stdout)
 
 RESTART_FLAG = "bot_restarted.flag"
 
