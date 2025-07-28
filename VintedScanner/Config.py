@@ -61,7 +61,18 @@ topics = {
         }
     },
 
-
+    "Isaac Selam + Boris Bidjian": {
+        "thread_id":1229,  # ID топика для Isaac Selam + Boris Bidjian
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '',
+            'brand_ids': '393343,484649,1670540,978010',
+            'order': 'newest_first',
+            'price_to': '150',
+        }
+    },
 
 
 
