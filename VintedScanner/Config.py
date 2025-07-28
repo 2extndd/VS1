@@ -33,7 +33,7 @@ topics = {
             'catalog_ids': '',
             'brand_ids': '212366',
             'order': 'newest_first',
-            'price_to': '100',
+            'price_to': '40',
         }
     },
     "Rick Owens": {
@@ -45,7 +45,7 @@ topics = {
             'catalog_ids': '',
             'brand_ids': '145654',
             'order': 'newest_first',
-            'price_to': '1000',
+            'price_to': '100',
         }
     },
     "Prada": {
@@ -57,7 +57,7 @@ topics = {
             'catalog_ids': '2050,1231,4,16',
             'brand_ids': '3573',
             'order': 'newest_first',
-            'price_to': '1000',
+            'price_to': '80',
         }
     },
 
