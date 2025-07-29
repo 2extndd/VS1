@@ -170,7 +170,15 @@ def scan_all_topics():
     cookies = session.cookies.get_dict()
 
     for topic_name, topic_info in Config.topics.items():
-        params = topic_info["query"]
+        params = topic_info["query"].copy()
+        # фильтруем catalog_ids
+        catalog_ids = params.get("catalog_ids", "")
+        exclude_ids = topic_info.get("exclude_catalog_ids", "")
+        if catalog_ids:
+            ids = [x.strip() for x in catalog_ids.split(",") if x.strip()]
+            exclude = [x.strip() for x in exclude_ids.split(",") if x.strip()]
+            filtered = [x for x in ids if x not in exclude]
+            params["catalog_ids"] = ",".join(filtered)
         thread_id = topic_info["thread_id"]
         try:
             response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers)
