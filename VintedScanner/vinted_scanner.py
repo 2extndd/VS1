@@ -20,16 +20,6 @@ logging.basicConfig(handlers=[handler],
                     format="%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s",
                     level=logging.INFO)
 
-def handle_restart_flag():
-    if os.path.exists(RESTART_FLAG):
-        logging.info("=== VintedScanner script was restarted by Telegram command ===")
-        with open("vinted_items.txt", "w") as f:
-            f.write("")
-        os.remove(RESTART_FLAG)
-        scan_all_topics(force_send=True)
-
-logging.info("=== VintedScanner script started or restarted ===")
-
 timeoutconnection = 30
 list_analyzed_items = []
 
@@ -133,11 +123,20 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
         else:
             logging.error(f"Telegram topic notification failed: {response.status_code}, {response.text}")
             break
+        time.sleep(1)  # пауза между попытками
     return False
 
 def save_last_items(items):
     with open("last_items.json", "w") as f:
         json.dump(items, f)
+
+def handle_restart_flag():
+    if os.path.exists(RESTART_FLAG):
+        logging.info("=== VintedScanner script was restarted by Telegram command ===")
+        with open("vinted_items.txt", "w") as f:
+            f.write("")
+        os.remove(RESTART_FLAG)
+        scan_all_topics(force_send=True)
 
 def scan_all_topics(force_send=False):
     load_analyzed_item()
@@ -176,6 +175,7 @@ def scan_all_topics(force_send=False):
                             "price": item_price,
                             "url": item_url
                         }, thread_id)
+                        time.sleep(1)  # пауза между отправками сообщений в Telegram
                     all_items.append({
                         "image": item_image,
                         "title": item_title,
