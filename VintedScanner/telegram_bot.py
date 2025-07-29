@@ -5,6 +5,16 @@ from telegram.ext import Application, CommandHandler
 import Config
 import json
 import time
+import asyncio
+
+async def safe_send_document(update, context, file_path):
+    for attempt in range(3):
+        try:
+            await update.message.reply_document(document=open(file_path, "rb"))
+            return
+        except Exception as e:
+            await update.message.reply_text(f"Ошибка отправки: {e}")
+            await asyncio.sleep(2)  # пауза между попытками
 
 RESTART_FLAG = "bot_restarted.flag"
 
@@ -38,6 +48,7 @@ async def refresh(update, context):
             caption=f"{item['title']}\n{item['price']}\n{item['url']}"
         )
         sent_messages.append((msg.message_id, time.time()))
+        await asyncio.sleep(1)  # пауза 1 секунда между отправками
     save_sent_messages(sent_messages)
 
 async def delete_old(update, context):
@@ -74,7 +85,10 @@ async def threadid(update, context):
 async def send_log(update, context):
     log_file = "vinted_scanner.log"
     if os.path.exists(log_file):
-        await update.message.reply_document(document=open(log_file, "rb"))
+        try:
+            await update.message.reply_document(document=open(log_file, "rb"))
+        except Exception as e:
+            await update.message.reply_text(f"Ошибка отправки лога: {e}")
     else:
         await update.message.reply_text("Файл логов не найден.")
 
