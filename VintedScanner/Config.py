@@ -101,5 +101,17 @@ topics = {
     },
 
 
-    # Добавьте другие типы вещей и топики по аналогии
+    "Alyx": {
+        "thread_id":2308,  # ID топика для Alyx
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '1455187, 362587',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+    
 }
