@@ -33,7 +33,7 @@ topics = {
             'catalog_ids': '',
             'brand_ids': '212366',
             'order': 'newest_first',
-            'price_to': '40',
+            'price_to': '45',
         }
     },
     "Rick Owens": {
@@ -94,7 +94,7 @@ topics = {
             'per_page': '7',
             'search_text': '',
             'catalog_ids': '', 
-            'brand_ids': '4000998, 543679, 184436',
+            'brand_ids': '4000998, 543679, 184436, 3090176',
             'order': 'newest_first',
             'price_to': '100',
         }
@@ -106,13 +106,27 @@ topics = {
         "query": {
             'page': '1',
             'per_page': '5',
-            'search_text': '',
-            'catalog_ids': '', 
+            'search_text': '79, 76, 82',
+            'catalog_ids': '2050', 
             'brand_ids': '1455187, 362587',
             'order': 'newest_first',
-            'price_to': '100',
+            'price_to': '60',
         }
     },
+
+    "Misbhv": {
+        "thread_id":2308,  # ID топика для Alyx
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '79, 76', 
+            'brand_ids': '47515',
+            'order': 'newest_first',
+            'price_to': '60',
+        }
+    },
+
     
 
     "Y-3 and Y's": {
@@ -178,7 +192,7 @@ topics = {
             'catalog_ids': '2050, 1231, 82', 
             'brand_ids': '56974, 2318552, 235040, 5589958, 1330138, 4022828, 3753069',
             'order': 'newest_first',
-            'price_to': '100',
+            'price_to': '80',
         }
     },
 
@@ -201,7 +215,7 @@ topics = {
             'page': '1',
             'per_page': '5',
             'search_text': '',
-            'catalog_ids': '1206, 76, 79', 
+            'catalog_ids': '1206, 76, 79, 94, 19', 
             'brand_ids': '1043, 5988099',
             'order': 'newest_first',
             'price_to': '80',
