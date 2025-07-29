@@ -74,6 +74,28 @@ async def send_log(update, context):
     else:
         await update.message.reply_text("Файл логов не найден.")
 
+async def log(update, context):
+    """Отправляет последние 10 строк из файла vinted_scanner.log"""
+    log_file = "vinted_scanner.log"
+    if os.path.exists(log_file):
+        try:
+            with open(log_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+                # Берем последние 10 строк
+                last_lines = lines[-10:] if len(lines) >= 10 else lines
+                log_text = "".join(last_lines)
+                if log_text.strip():
+                    # Обрезаем сообщение если оно слишком длинное (лимит Telegram ~4096 символов)
+                    if len(log_text) > 4000:
+                        log_text = "..." + log_text[-3900:]
+                    await update.message.reply_text(f"<pre>{log_text}</pre>", parse_mode="HTML")
+                else:
+                    await update.message.reply_text("Файл логов пуст.")
+        except Exception as e:
+            await update.message.reply_text(f"Ошибка чтения лога: {e}")
+    else:
+        await update.message.reply_text("Файл логов не найден.")
+
 async def notify_start(application):
     await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот запущен!")
     # НЕ отправляем все вещи из last_items.json при обычном запуске!
@@ -94,6 +116,7 @@ def main():
     application.add_handler(CommandHandler('threadid', threadid))
     application.add_handler(CommandHandler('restart', restart))
     application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
+    application.add_handler(CommandHandler('log', log))  # команда для последних 10 строк лога
     application.post_init = notify_start
     application.run_polling()
 
