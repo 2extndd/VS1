@@ -136,6 +136,20 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
                 retry_after = response.json().get("parameters", {}).get("retry_after", 30)
             except Exception:
                 retry_after = 30
+            warn_text = f"⚠️ ВНИМАНИЕ: Telegram API отправил Too Many Requests! Бот на паузе {retry_after} сек.\n" \
+                        f"Строка из лога:\n429 Too Many Requests. Waiting {retry_after} seconds before retry..."
+            # Отправляем предупреждение в чат
+            try:
+                import Config
+                requests.post(
+                    f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage",
+                    data={
+                        "chat_id": Config.telegram_chat_id,
+                        "text": warn_text
+                    }
+                )
+            except Exception as e:
+                logging.error(f"Ошибка отправки предупреждения в чат: {e}")
             logging.warning(f"429 Too Many Requests. Waiting {retry_after} seconds before retry...")
             time.sleep(retry_after)
         else:
@@ -147,8 +161,6 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
 def handle_restart_flag():
     if os.path.exists(RESTART_FLAG):
         logging.info("=== VintedScanner script was restarted by Telegram command ===")
-        with open("vinted_items.txt", "w") as f:
-            f.write("")
         os.remove(RESTART_FLAG)
         # НЕ отправляем старые вещи после перезапуска!
 
