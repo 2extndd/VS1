@@ -189,11 +189,12 @@ def scan_all_topics():
 
         if data and "items" in data:
             exclude_ids = topic_info.get("exclude_catalog_ids", "")
-            exclude_set = set(x.strip() for x in exclude_ids.split(",") if x.strip())
+            exclude_set = set(str(x.strip()) for x in exclude_ids.split(",") if x.strip())
             for item in data["items"]:
-                # Фильтруем вещи по исключённым категориям всегда
-                if str(item.get("catalog_id", "")) in exclude_set:
-                    continue
+                catalog_id = item.get("catalog_id", "")
+                if catalog_id != "":
+                    if str(catalog_id) in exclude_set:
+                        continue
                 item_id = str(item["id"])
                 item_title = item["title"]
                 item_url = item["url"]
