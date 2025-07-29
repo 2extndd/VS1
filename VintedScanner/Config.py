@@ -44,6 +44,20 @@ topics = {
         "exclude_catalog_ids": "26, 98, 146, 139"
     },
 
+    "Alexander Wang Leather Bags": {
+        "thread_id": 718,
+        "query": {
+            'page': '1',
+            'per_page': '2',
+            'search_text': 'Leather',
+            'catalog_ids': '94',
+            'brand_ids': '28327',
+            'order': 'newest_first',
+            'price_to': '90',
+        },
+        "exclude_catalog_ids": "26, 98, 146, 139"
+    },
+
     "Rick Owens": {
         "thread_id": 843,
         "query": {
@@ -174,14 +188,14 @@ topics = {
         },
         "exclude_catalog_ids": "26, 98, 146, 139"
     },
-    "Japanese Items and LUX #3 (том кром, дамир дома)": {
+    "Japanese Items and LUX #3 (том кром, дамир дома, крейг грин)": {
         "thread_id": 2959,
         "query": {
             'page': '1',
             'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
-            'brand_ids': '461946, 610205, 123118',
+            'brand_ids': '461946, 610205, 123118, 826571, 315985',
             'order': 'newest_first',
             'price_to': '50',
         },
@@ -213,6 +227,37 @@ topics = {
         },
         "exclude_catalog_ids": "26, 98, 146, 139"
     },
+
+    "New Rock & Swear": {
+        "thread_id": 4291,
+        "query": {
+            'page': '1',
+            'per_page': '2',
+            'search_text': '',
+            'catalog_ids': '1231',
+            'brand_ids': '432, 324572, 12377',
+            'order': 'newest_first',
+            'price_to': '50',
+        },
+        "exclude_catalog_ids": "26, 98, 146, 139"
+    },
+
+    "Gordon Jack": {
+        "thread_id": 4291,
+        "query": {
+            'page': '1',
+            'per_page': '2',
+            'search_text': 'Gordon Jack',
+            'catalog_ids': '1231',
+            'brand_ids': '',
+            'order': 'newest_first',
+            'price_to': '70',
+        },
+        "exclude_catalog_ids": "26, 98, 146, 139"
+    },
+
+
+
     "Dolce&Gabbana верх и аксессуары": {
         "thread_id": 3540,
         "query": {
