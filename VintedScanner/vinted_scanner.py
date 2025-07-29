@@ -58,7 +58,7 @@ def save_analyzed_item(hash):
         logging.error(e, exc_info=True)
         sys.exit()
 
-def send_email(item_title, item_price, item_url, item_image):
+def send_email(item_title, item_price, item_url, item_image, item_size=""):
     try:
         msg = EmailMessage()
         msg["To"] = Config.smtp_toaddrs
@@ -66,7 +66,10 @@ def send_email(item_title, item_price, item_url, item_image):
         msg["Subject"] = "Vinted Scanner - New Item"
         msg["Date"] = email.utils.formatdate(localtime=True)
         msg["Message-ID"] = email.utils.make_msgid()
-        body = f"{item_title}\n{item_price}\n🔗 {item_url}\n📷 {item_image}"
+        body = f"{item_title}\n{item_price}"
+        if item_size:
+            body += f", SIZE: {item_size}"
+        body += f"\n🔗 {item_url}\n📷 {item_image}"
         msg.set_content(body)
         with smtplib.SMTP(Config.smtp_server, 587) as smtpserver:
             smtpserver.ehlo()
@@ -80,9 +83,12 @@ def send_email(item_title, item_price, item_url, item_image):
     except Exception as e:
         logging.error(f"Error sending email: {e}", exc_info=True)
 
-def send_slack_message(item_title, item_price, item_url, item_image):
+def send_slack_message(item_title, item_price, item_url, item_image, item_size=""):
     webhook_url = Config.slack_webhook_url 
-    message = f"*{item_title}*\n🏷️ {item_price}\n🔗 {item_url}\n📷 {item_image}"
+    message = f"*{item_title}*\n🏷️ {item_price}"
+    if item_size:
+        message += f", SIZE: {item_size}"
+    message += f"\n🔗 {item_url}\n📷 {item_image}"
     slack_data = {"text": message}
     try:
         response = requests.post(
@@ -99,7 +105,10 @@ def send_slack_message(item_title, item_price, item_url, item_image):
         logging.error(f"Error sending Slack message: {e}")
 
 def send_telegram_topic_message(item, thread_id, max_retries=5):
-    caption = f"<b>{item['title']}</b>\n🏷️ {item['price']}\n🔗 {item['url']}"
+    caption = f"<b>{item['title']}</b>\n🏷️ {item['price']}"
+    if item.get("size"):
+        caption += f", SIZE: {item['size']}"
+    caption += f"\n🔗 {item['url']}"
     url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendPhoto"
     params = {
         "chat_id": Config.telegram_chat_id,
@@ -123,12 +132,8 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
         else:
             logging.error(f"Telegram topic notification failed: {response.status_code}, {response.text}")
             break
-        time.sleep(1)  # пауза между попытками
+        time.sleep(1)
     return False
-
-def save_last_items(items):
-    with open("last_items.json", "w") as f:
-        json.dump(items, f)
 
 def handle_restart_flag():
     if os.path.exists(RESTART_FLAG):
@@ -136,9 +141,9 @@ def handle_restart_flag():
         with open("vinted_items.txt", "w") as f:
             f.write("")
         os.remove(RESTART_FLAG)
-        scan_all_topics(force_send=True)
+        # НЕ отправляем старые вещи после перезапуска!
 
-def scan_all_topics(force_send=False):
+def scan_all_topics():
     load_analyzed_item()
     session = requests.Session()
     session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
@@ -147,7 +152,6 @@ def scan_all_topics(force_send=False):
     for topic_name, topic_info in Config.topics.items():
         params = topic_info["query"]
         thread_id = topic_info["thread_id"]
-        all_items = []
         try:
             response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers)
             data = response.json()
@@ -162,25 +166,31 @@ def scan_all_topics(force_send=False):
                 item_url = item["url"]
                 item_price = f'{item["price"]["amount"]} {item["price"]["currency_code"]}'
                 item_image = item["photo"]["full_size_url"]
+                # Получаем размер, если есть
+                item_size = ""
+                if "size_title" in item and item["size_title"]:
+                    item_size = item["size_title"]
+                elif "size" in item and item["size"]:
+                    item_size = item["size"]
                 # Отправляем только новые вещи
                 if item_id not in list_analyzed_items:
-                    # ...отправка email/slack/telegram...
-                    send_telegram_topic_message({
-                        "image": item_image,
-                        "title": item_title,
-                        "price": item_price,
-                        "url": item_url
-                    }, thread_id)
-                    time.sleep(1)  # пауза между отправками
-                    all_items.append({
-                        "image": item_image,
-                        "title": item_title,
-                        "price": item_price,
-                        "url": item_url
-                    })
+                    if Config.smtp_username and Config.smtp_server:
+                        send_email(item_title, item_price, item_url, item_image, item_size)
+                        time.sleep(1)
+                    if Config.slack_webhook_url:
+                        send_slack_message(item_title, item_price, item_url, item_image, item_size)
+                        time.sleep(1)
+                    if Config.telegram_bot_token and Config.telegram_chat_id:
+                        send_telegram_topic_message({
+                            "image": item_image,
+                            "title": item_title,
+                            "price": item_price,
+                            "url": item_url,
+                            "size": item_size
+                        }, thread_id)
+                        time.sleep(1)
                     list_analyzed_items.append(item_id)
                     save_analyzed_item(item_id)
-        # save_last_items(all_items[:5])  # можно убрать, если не используете last_items.json для рассылки
 
 def main():
     handle_restart_flag()
