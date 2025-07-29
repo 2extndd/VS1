@@ -182,7 +182,11 @@ def scan_all_topics():
         thread_id = topic_info["thread_id"]
         try:
             response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers)
-            data = response.json()
+            try:
+                data = response.json()
+            except Exception as e:
+                logging.error(f"JSONDecodeError: {e}\nStatus code: {response.status_code}\nRequest params: {params}", exc_info=True)
+                continue
         except Exception as e:
             logging.error(f"Request error: {e}", exc_info=True)
             continue
