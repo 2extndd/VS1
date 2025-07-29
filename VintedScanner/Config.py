@@ -33,7 +33,7 @@ topics = {
         "thread_id": 843,
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '145654',
@@ -46,7 +46,7 @@ topics = {
         "thread_id": 747,
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '2050,1231,82',
             'brand_ids': '3573',
@@ -59,7 +59,7 @@ topics = {
         "thread_id": 1229,
         "query": {
             'page': '1',
-            'per_page': '7',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '393343,484649,1670540,978010',
@@ -72,7 +72,7 @@ topics = {
         "thread_id": 1278,
         "query": {
             'page': '1',
-            'per_page': '7',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '2050,1231,4,82,1187',
             'brand_ids': '639289',
@@ -85,7 +85,7 @@ topics = {
         "thread_id": 1351,
         "query": {
             'page': '1',
-            'per_page': '7',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '4000998, 543679, 184436, 3090176',
@@ -98,7 +98,7 @@ topics = {
         "thread_id": 2308,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '79, 76, 82',
             'catalog_ids': '2050',
             'brand_ids': '1455187, 362587',
@@ -111,7 +111,7 @@ topics = {
         "thread_id": 2308,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '79, 76',
             'brand_ids': '47515',
@@ -124,7 +124,7 @@ topics = {
         "thread_id": 2394,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '117012, 6397426, 200474, 2887534',
@@ -137,7 +137,7 @@ topics = {
         "thread_id": 2959,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '83680, 349786, 919209, 36953, 319587, 505614, 373316, 11521, 344976, 75090',
@@ -150,7 +150,7 @@ topics = {
         "thread_id": 2959,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '24861, 344976, 17991, 724036, 51445',
@@ -163,7 +163,7 @@ topics = {
         "thread_id": 2959,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '461946, 610205, 123118',
@@ -176,7 +176,7 @@ topics = {
         "thread_id": 2977,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '2050, 1231, 82',
             'brand_ids': '56974, 2318552, 235040, 5589958, 1330138, 4022828, 3753069',
@@ -189,7 +189,7 @@ topics = {
         "thread_id": 3412,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '2050, 1231, 82',
             'brand_ids': '4129, 71474, 47829',
@@ -202,7 +202,7 @@ topics = {
         "thread_id": 3540,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '1206, 76, 79, 94, 19',
             'brand_ids': '1043, 5988099',
