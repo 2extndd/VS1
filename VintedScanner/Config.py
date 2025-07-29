@@ -128,4 +128,59 @@ topics = {
         }
     },
     
+    "Japanese Items and LUX": {
+        "thread_id":2959,  # ID топика для Japanese Items and LUX
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '83680, 349786, 919209,  36953,  319587, 505614, 373316, 11521,  344976, 75090 ',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+
+        "Japanese Items and LUX #2 (типо кэрол, дорогая япония, анн демель и т.д.)": {
+        "thread_id":2959,  # ID топика для Japanese Items and LUX
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '24861, 344976, 17991, 724036, 51445, ',
+            'order': 'newest_first',
+            'price_to': '200',
+        }
+    },
+
+
+        "Japanese Items and LUX #3 (том кром, дамир дома)": {
+        "thread_id":2959,  # ID топика для Japanese Items and LUX
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '461946, 610205, 123118',
+            'order': 'newest_first',
+            'price_to': '50',
+        }
+    },
+
+    
+            "CDG + Junya": {
+        "thread_id":2977,  # ID топика для CDG + Junya
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '2050, 1231, 82', 
+            'brand_ids': '56974, 2318552, 235040, 5589958, 1330138, 4022828, 3753069',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+
+
 }
