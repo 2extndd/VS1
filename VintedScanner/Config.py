@@ -36,6 +36,7 @@ topics = {
             'price_to': '45',
         }
     },
+        "exclude_catalog_ids": "26, 98"
     "Rick Owens": {
         "thread_id":843,  # ID топика для Rick Owens
         "query": {
@@ -48,6 +49,7 @@ topics = {
             'price_to': '100',
         }
     },
+        "exclude_catalog_ids": "26, 98"
     "Prada": {
         "thread_id":747,  # ID топика для Prada
         "query": {
@@ -60,6 +62,7 @@ topics = {
             'price_to': '80',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     "Isaac Selam + Boris Bidjian": {
         "thread_id":1229,  # ID топика для Isaac Selam + Boris Bidjian
@@ -73,6 +76,7 @@ topics = {
             'price_to': '150',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     "Maison Margiela + mm6": {
         "thread_id":1278,  # ID топика для Maison Margiela + mm6
@@ -86,6 +90,7 @@ topics = {
             'price_to': '100',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     "Raf Simons + ALL": {
         "thread_id":1351,  # ID топика для Raf Simons + ALL
@@ -99,6 +104,7 @@ topics = {
             'price_to': '100',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
 
     "Alyx": {
@@ -113,6 +119,7 @@ topics = {
             'price_to': '60',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     "Misbhv": {
         "thread_id":2308,  # ID топика для Alyx
@@ -126,6 +133,7 @@ topics = {
             'price_to': '60',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     
 
@@ -141,7 +149,8 @@ topics = {
             'price_to': '100',
         }
     },
-    
+        "exclude_catalog_ids": "26, 98"
+
     "Japanese Items and LUX": {
         "thread_id":2959,  # ID топика для Japanese Items and LUX
         "query": {
@@ -154,6 +163,7 @@ topics = {
             'price_to': '100',
         }
     },
+        "exclude_catalog_ids": ""
 
         "Japanese Items and LUX #2 (типо кэрол, дорогая япония, анн демель и т.д.)": {
         "thread_id":2959,  # ID топика для Japanese Items and LUX
@@ -167,6 +177,7 @@ topics = {
             'price_to': '200',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
 
         "Japanese Items and LUX #3 (том кром, дамир дома)": {
@@ -181,6 +192,7 @@ topics = {
             'price_to': '50',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     
             "CDG + Junya": {
@@ -195,6 +207,7 @@ topics = {
             'price_to': '80',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
             "JPG + Helmut Lang": {
         "thread_id":3412,  # ID топика для JPG + Helmut Lang
@@ -208,9 +221,10 @@ topics = {
             'price_to': '80',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
             "Dolce&Gabbana верх и аксессуары": {
-        "thread_id":3412,  # ID топика для JPG + Helmut Lang
+        "thread_id":3540,  # ID топика для JPG + Helmut Lang
         "query": {
             'page': '1',
             'per_page': '5',
@@ -221,6 +235,7 @@ topics = {
             'price_to': '80',
         }
     },
+        "exclude_catalog_ids": "26, 98"
 
     
 
