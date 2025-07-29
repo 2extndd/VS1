@@ -162,31 +162,25 @@ def scan_all_topics(force_send=False):
                 item_url = item["url"]
                 item_price = f'{item["price"]["amount"]} {item["price"]["currency_code"]}'
                 item_image = item["photo"]["full_size_url"]
-                # Если force_send=True, отправляем все, иначе только новые
-                if force_send or item_id not in list_analyzed_items:
-                    if Config.smtp_username and Config.smtp_server:
-                        send_email(item_title, item_price, item_url, item_image)
-                    if Config.slack_webhook_url:
-                        send_slack_message(item_title, item_price, item_url, item_image)
-                    if Config.telegram_bot_token and Config.telegram_chat_id:
-                        send_telegram_topic_message({
-                            "image": item_image,
-                            "title": item_title,
-                            "price": item_price,
-                            "url": item_url
-                        }, thread_id)
-                        time.sleep(1)  # пауза между отправками сообщений в Telegram
+                # Отправляем только новые вещи
+                if item_id not in list_analyzed_items:
+                    # ...отправка email/slack/telegram...
+                    send_telegram_topic_message({
+                        "image": item_image,
+                        "title": item_title,
+                        "price": item_price,
+                        "url": item_url
+                    }, thread_id)
+                    time.sleep(1)  # пауза между отправками
                     all_items.append({
                         "image": item_image,
                         "title": item_title,
                         "price": item_price,
                         "url": item_url
                     })
-                    if item_id not in list_analyzed_items:
-                        list_analyzed_items.append(item_id)
-                        save_analyzed_item(item_id)
-        if all_items:
-            save_last_items(all_items[:5])
+                    list_analyzed_items.append(item_id)
+                    save_analyzed_item(item_id)
+        # save_last_items(all_items[:5])  # можно убрать, если не используете last_items.json для рассылки
 
 def main():
     handle_restart_flag()
