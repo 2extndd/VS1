@@ -114,4 +114,18 @@ topics = {
         }
     },
     
+
+    "Y-3 and Y's": {
+        "thread_id":2394,  # ID топика для Y-3 and Y's
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '117012, 6397426, 200474, 2887534',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+    
 }
