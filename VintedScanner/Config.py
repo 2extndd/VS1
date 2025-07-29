@@ -20,7 +20,7 @@ topics = {
         "thread_id": 718,
         "query": {
             'page': '1',
-            'per_page': '5',
+            'per_page': '2',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '212366',
@@ -29,6 +29,21 @@ topics = {
         },
         "exclude_catalog_ids": "26, 98, 146, 139"
     },
+
+    "bags 2": {
+        "thread_id": 718,
+        "query": {
+            'page': '1',
+            'per_page': '2',
+            'search_text': 'ggl',
+            'catalog_ids': '19,82',
+            'brand_ids': '',
+            'order': 'newest_first',
+            'price_to': '45',
+        },
+        "exclude_catalog_ids": "26, 98, 146, 139"
+    },
+
     "Rick Owens": {
         "thread_id": 843,
         "query": {
