@@ -15,8 +15,17 @@ import subprocess
 
 RESTART_FLAG = "bot_restarted.flag"
 
-handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
-logging.basicConfig(handlers=[handler],
+# Настройка логирования - вывод в файл И в консоль для RailWay
+file_handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
+console_handler = logging.StreamHandler(sys.stdout)
+
+# Форматирование для обоих обработчиков
+formatter = logging.Formatter("%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Настройка корневого логгера
+logging.basicConfig(handlers=[file_handler, console_handler],
                     format="%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s",
                     level=logging.INFO)
 
