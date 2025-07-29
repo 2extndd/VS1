@@ -54,7 +54,7 @@ topics = {
             'page': '1',
             'per_page': '10',
             'search_text': '',
-            'catalog_ids': '2050,1231,4,16',
+            'catalog_ids': '2050,1231,82',
             'brand_ids': '3573',
             'order': 'newest_first',
             'price_to': '80',
@@ -181,6 +181,35 @@ topics = {
             'price_to': '100',
         }
     },
+
+            "JPG + Helmut Lang": {
+        "thread_id":3412,  # ID топика для JPG + Helmut Lang
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '2050, 1231, 82', 
+            'brand_ids': '4129, 71474, 47829',
+            'order': 'newest_first',
+            'price_to': '80',
+        }
+    },
+
+            "Dolce&Gabbana верх и аксессуары": {
+        "thread_id":3412,  # ID топика для JPG + Helmut Lang
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '1206, 76, 79', 
+            'brand_ids': '1043, 5988099',
+            'order': 'newest_first',
+            'price_to': '80',
+        }
+    },
+
+    
+
 
 
 }
