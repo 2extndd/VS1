@@ -65,7 +65,7 @@ topics = {
         "thread_id":1229,  # ID топика для Isaac Selam + Boris Bidjian
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '7',
             'search_text': '',
             'catalog_ids': '',
             'brand_ids': '393343,484649,1670540,978010',
@@ -78,7 +78,7 @@ topics = {
         "thread_id":1278,  # ID топика для Maison Margiela + mm6
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '7',
             'search_text': '',
             'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 4 - женские вещи, 1231 - мужские обувь
             'brand_ids': '639289',
@@ -91,7 +91,7 @@ topics = {
         "thread_id":1351,  # ID топика для Raf Simons + ALL
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '7',
             'search_text': '',
             'catalog_ids': '', 
             'brand_ids': '4000998, 543679, 184436',
@@ -105,7 +105,7 @@ topics = {
         "thread_id":2308,  # ID топика для Alyx
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '5',
             'search_text': '',
             'catalog_ids': '', 
             'brand_ids': '1455187, 362587',
@@ -119,7 +119,7 @@ topics = {
         "thread_id":2394,  # ID топика для Y-3 and Y's
         "query": {
             'page': '1',
-            'per_page': '10',
+            'per_page': '5',
             'search_text': '',
             'catalog_ids': '', 
             'brand_ids': '117012, 6397426, 200474, 2887534',
