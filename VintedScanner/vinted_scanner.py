@@ -140,7 +140,6 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
                         f"Строка из лога:\n429 Too Many Requests. Waiting {retry_after} seconds before retry..."
             # Отправляем предупреждение в чат
             try:
-                import Config
                 requests.post(
                     f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage",
                     data={
