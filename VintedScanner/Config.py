@@ -1,115 +1,131 @@
-import sys
-import os
-import logging
-from telegram.ext import Application, CommandHandler
-import Config
-import json
-import time
-import asyncio
+# SMTP Settings for e-mail notification
+smtp_username = ""
+smtp_psw = ""
+smtp_server = ""
+smtp_toaddrs = ["User <example@example.com>"]
 
-async def safe_send_document(update, context, file_path):
-    for attempt in range(3):
-        try:
-            await update.message.reply_document(document=open(file_path, "rb"))
-            return
-        except Exception as e:
-            await update.message.reply_text(f"Ошибка отправки: {e}")
-            await asyncio.sleep(2)  # пауза между попытками
+# Slack WebHook for notification
+slack_webhook_url = ""
 
-RESTART_FLAG = "bot_restarted.flag"
+# Telegram Token and ChatID for notification
+telegram_bot_token = "8103604647:AAFoZVtAQxg5prugi_u2-YAkXFnf3WRTM-Q"
+telegram_chat_id = "-1002721134127"
 
-def get_last_items():
-    try:
-        with open("last_items.json", "r") as f:
-            return json.load(f)
-    except Exception:
-        return []
+# Vinted URL: change the TLD according to your country (.fr, .es, etc.)
+vinted_url = "https://www.vinted.de"
 
-def load_sent_messages():
-    if os.path.exists("sent_messages.json"):
-        try:
-            with open("sent_messages.json", "r") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
+# Vinted queries for research
+# "page", "per_page" and "order" you may not edit them
+# "search_text" is the free search field, this field may be empty if you wish to search for the entire brand.
+# "catalog_ids" is the category in which to eventually search, if the field is empty it will search in all categories. Vinted assigns a numeric ID to each category, e.g. 2996 is the ID for e-Book Reader
+# "brand_ids" if you want to search by brand. Vinted assigns a numeric ID to each brand, e.g. 417 is the ID for Louis Vuitton
+# "order" you can change it to relevance, newest_first, price_high_to_low, price_low_to_high
 
-def save_sent_messages(messages):
-    with open("sent_messages.json", "w") as f:
-        json.dump(messages, f)
 
-sent_messages = load_sent_messages()  # [(message_id, timestamp)]
+# Список топиков и параметров для поиска
+topics = {
+    "bags": {
+        "thread_id":718,  # ID топика для сумок
+        "query": {
+            'page': '1',
+            'per_page': '5',
+            'search_text': '',
+            'catalog_ids': '',
+            'brand_ids': '212366',
+            'order': 'newest_first',
+            'price_to': '40',
+        }
+    },
+    "Rick Owens": {
+        "thread_id":843,  # ID топика для Rick Owens
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '',
+            'brand_ids': '145654',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+    "Prada": {
+        "thread_id":747,  # ID топика для Prada
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '2050,1231,4,16',
+            'brand_ids': '3573',
+            'order': 'newest_first',
+            'price_to': '80',
+        }
+    },
 
-async def refresh(update, context):
-    items = get_last_items()
-    for item in items:
-        msg = await update.message.reply_photo(
-            photo=item["image"],
-            caption=f"{item['title']}\n{item['price']}\n{item['url']}"
-        )
-        sent_messages.append((msg.message_id, time.time()))
-        await asyncio.sleep(1)  # пауза 1 секунда между отправками
-    save_sent_messages(sent_messages)
+    "Isaac Selam + Boris Bidjian": {
+        "thread_id":1229,  # ID топика для Isaac Selam + Boris Bidjian
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '',
+            'brand_ids': '393343,484649,1670540,978010',
+            'order': 'newest_first',
+            'price_to': '150',
+        }
+    },
 
-async def delete_old(update, context):
-    chat_id = update.effective_chat.id
-    now = time.time()
-    deleted = 0
-    for msg_id, ts in sent_messages[:]:
-        if now - ts > 300:
-            try:
-                await context.bot.delete_message(chat_id=chat_id, message_id=msg_id)
-                sent_messages.remove((msg_id, ts))
-                deleted += 1
-            except Exception:
-                pass
-    save_sent_messages(sent_messages)
-    await update.message.reply_text(f"Удалено сообщений: {deleted}")
+    "Maison Margiela + mm6": {
+        "thread_id":1278,  # ID топика для Maison Margiela + mm6
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '2050,1231,4,82,1187', #1187 - женские акссесы, 82 - мужские аксессуары, 4 - женские вещи, 1231 - мужские обувь
+            'brand_ids': '639289',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
 
-async def restart(update, context):
-    await update.message.reply_text("Перезапуск скрипта...")
-    # Очищаем vinted_items.txt только при /restart
-    with open("vinted_items.txt", "w") as f:
-        f.write("")
-    # Флаг для перезапуска
-    with open(RESTART_FLAG, "w") as f:
-        f.write("1")
-    os.execv(sys.executable, [sys.executable] + sys.argv)
+    "Raf Simons + ALL": {
+        "thread_id":1351,  # ID топика для Raf Simons + ALL
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '4000998, 543679, 184436',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
 
-async def status(update, context):
-    await update.message.reply_text("Пашет пиздато!")
 
-async def threadid(update, context):
-    await update.message.reply_text(f"thread_id: {update.message.message_thread_id}")
+    "Alyx": {
+        "thread_id":2308,  # ID топика для Alyx
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '1455187, 362587',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+    
 
-async def send_log(update, context):
-    log_file = "vinted_scanner.log"
-    if os.path.exists(log_file):
-        try:
-            await update.message.reply_document(document=open(log_file, "rb"))
-        except Exception as e:
-            await update.message.reply_text(f"Ошибка отправки лога: {e}")
-    else:
-        await update.message.reply_text("Файл логов не найден.")
-
-async def notify_start(application):
-    await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот запущен!")
-    # НЕ отправляем все вещи из last_items.json при обычном запуске!
-    if os.path.exists(RESTART_FLAG):
-        await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот перезапущен!")
-        logging.info("=== VintedScanner script was restarted by Telegram command ===")
-        os.remove(RESTART_FLAG)
-
-def main():
-    application = Application.builder().token(Config.telegram_bot_token).build()
-    application.add_handler(CommandHandler('refresh', refresh))
-    application.add_handler(CommandHandler('status', status))
-    application.add_handler(CommandHandler('delete_old', delete_old))
-    application.add_handler(CommandHandler('threadid', threadid))
-    application.add_handler(CommandHandler('restart', restart))
-    application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
-    application.post_init = notify_start
-    application.run_polling()
-
-if __name__ == '__main__':
-    main()
+    "Y-3 and Y's": {
+        "thread_id":2394,  # ID топика для Y-3 and Y's
+        "query": {
+            'page': '1',
+            'per_page': '10',
+            'search_text': '',
+            'catalog_ids': '', 
+            'brand_ids': '117012, 6397426, 200474, 2887534',
+            'order': 'newest_first',
+            'price_to': '100',
+        }
+    },
+    
+}
