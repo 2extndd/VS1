@@ -7,14 +7,16 @@ import json
 import time
 import asyncio
 
-RESTART_FLAG = "bot_restarted.flag"
+async def safe_send_document(update, context, file_path):
+    for attempt in range(3):
+        try:
+            await update.message.reply_document(document=open(file_path, "rb"))
+            return
+        except Exception as e:
+            await update.message.reply_text(f"Ошибка отправки: {e}")
+            await asyncio.sleep(2)  # пауза между попытками
 
-def get_last_items():
-    try:
-        with open("last_items.json", "r") as f:
-            return json.load(f)
-    except Exception:
-        return []
+RESTART_FLAG = "bot_restarted.flag"
 
 def load_sent_messages():
     if os.path.exists("sent_messages.json"):
@@ -30,46 +32,6 @@ def save_sent_messages(messages):
         json.dump(messages, f)
 
 sent_messages = load_sent_messages()  # [(message_id, timestamp)]
-
-async def safe_send_document(update, context, file_path):
-    for attempt in range(3):
-        try:
-            await update.message.reply_document(document=open(file_path, "rb"))
-            return
-        except Exception as e:
-            await update.message.reply_text(f"Ошибка отправки: {e}")
-            await asyncio.sleep(2)
-
-async def safe_send_message(bot, chat_id, text, max_attempts=3):
-    for attempt in range(max_attempts):
-        try:
-            await bot.send_message(chat_id=chat_id, text=text)
-            return True
-        except Exception as e:
-            await asyncio.sleep(2)
-    return False
-
-async def safe_send_photo(bot, chat_id, photo, caption, max_attempts=3):
-    for attempt in range(max_attempts):
-        try:
-            await bot.send_photo(chat_id=chat_id, photo=photo, caption=caption)
-            return True
-        except Exception as e:
-            await asyncio.sleep(2)
-    return False
-
-async def refresh(update, context):
-    items = get_last_items()
-    for item in items:
-        await safe_send_photo(
-            update.effective_chat.id,
-            update.effective_chat.id,
-            item["image"],
-            f"{item['title']}\n{item['price']}\n{item['url']}"
-        )
-        sent_messages.append((update.message.message_id, time.time()))
-        await asyncio.sleep(1)
-    save_sent_messages(sent_messages)
 
 async def delete_old(update, context):
     chat_id = update.effective_chat.id
@@ -88,8 +50,10 @@ async def delete_old(update, context):
 
 async def restart(update, context):
     await update.message.reply_text("Перезапуск скрипта...")
+    # Очищаем vinted_items.txt только при /restart
     with open("vinted_items.txt", "w") as f:
         f.write("")
+    # Флаг для перезапуска
     with open(RESTART_FLAG, "w") as f:
         f.write("1")
     os.execv(sys.executable, [sys.executable] + sys.argv)
@@ -103,25 +67,33 @@ async def threadid(update, context):
 async def send_log(update, context):
     log_file = "vinted_scanner.log"
     if os.path.exists(log_file):
-        await safe_send_document(update, context, log_file)
+        try:
+            await update.message.reply_document(document=open(log_file, "rb"))
+        except Exception as e:
+            await update.message.reply_text(f"Ошибка отправки лога: {e}")
     else:
         await update.message.reply_text("Файл логов не найден.")
 
 async def notify_start(application):
-    await safe_send_message(application.bot, Config.telegram_chat_id, "Бот запущен!")
+    await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот запущен!")
+    # НЕ отправляем все вещи из last_items.json при обычном запуске!
     if os.path.exists(RESTART_FLAG):
-        await safe_send_message(application.bot, Config.telegram_chat_id, "Бот перезапущен!")
+        await application.bot.send_message(chat_id=Config.telegram_chat_id, text="Бот перезапущен!")
         logging.info("=== VintedScanner script was restarted by Telegram command ===")
         os.remove(RESTART_FLAG)
 
+# ВАЖНО: чтобы бот отправлял только 1 сообщение в секунду,
+# в основном скрипте, где отправляются сообщения о новых вещах,
+# используйте await asyncio.sleep(1) после каждой отправки!
+
 def main():
     application = Application.builder().token(Config.telegram_bot_token).build()
-    application.add_handler(CommandHandler('refresh', refresh))
+    # application.add_handler(CommandHandler('refresh', refresh))  # удалено
     application.add_handler(CommandHandler('status', status))
     application.add_handler(CommandHandler('delete_old', delete_old))
     application.add_handler(CommandHandler('threadid', threadid))
     application.add_handler(CommandHandler('restart', restart))
-    application.add_handler(CommandHandler('send_log', send_log))
+    application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
     application.post_init = notify_start
     application.run_polling()
 
