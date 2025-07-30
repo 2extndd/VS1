@@ -114,10 +114,19 @@ def send_slack_message(item_title, item_price, item_url, item_image, item_size="
         logging.error(f"Error sending Slack message: {e}")
 
 def send_telegram_topic_message(item, thread_id, max_retries=5):
+    """
+    Отправляет уведомление о новом товаре в Telegram топик с автоматическим fallback в общий чат
+    
+    Args:
+        item: словарь с данными товара (title, price, url, image, size)
+        thread_id: ID топика в Telegram
+        max_retries: максимальное количество попыток отправки
+    """
     caption = f"<b>{item['title']}</b>\n🏷️ {item['price']}"
     if item.get("size"):
         caption += f", SIZE: {item['size']}"
     caption += f"\n🔗 {item['url']}"
+    
     url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendPhoto"
     params = {
         "chat_id": Config.telegram_chat_id,
@@ -126,11 +135,36 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
         "parse_mode": "HTML",
         "message_thread_id": thread_id
     }
+    
     for attempt in range(max_retries):
         response = requests.post(url, data=params)
         if response.status_code == 200:
             logging.info(f"Telegram topic notification sent to thread {thread_id}")
             return True
+        elif response.status_code == 400:
+            # Проверяем если это ошибка "thread not found"
+            try:
+                error_data = response.json()
+                if "message thread not found" in error_data.get("description", "").lower():
+                    logging.warning(f"Thread {thread_id} not found, sending to main chat")
+                    # Отправляем в основной чат без thread_id
+                    params_main = params.copy()
+                    del params_main["message_thread_id"]
+                    params_main["caption"] = f"[Топик {thread_id}] " + caption
+                    
+                    response_main = requests.post(url, data=params_main)
+                    if response_main.status_code == 200:
+                        logging.info(f"Message sent to main chat instead of thread {thread_id}")
+                        return True
+                    else:
+                        logging.error(f"Failed to send to main chat: {response_main.status_code}, {response_main.text}")
+                        break
+                else:
+                    logging.error(f"Telegram API error: {response.status_code}, {response.text}")
+                    break
+            except Exception as e:
+                logging.error(f"Error parsing response: {e}")
+                break
         elif response.status_code == 429:
             try:
                 retry_after = response.json().get("parameters", {}).get("retry_after", 30)

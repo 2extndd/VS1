@@ -352,3 +352,90 @@
 2025-07-28 02:05:19,910 - vinted_scanner.py - send_telegram_topic_message():124 - INFO - Telegram topic notification sent to thread 747
 2025-07-28 02:06:29,732 - vinted_scanner.py - send_telegram_topic_message():124 - INFO - Telegram topic notification sent to thread 747
 2025-07-28 02:08:25,191 - vinted_scanner.py - send_telegram_topic_message():124 - INFO - Telegram topic notification sent to thread 747
+2025-07-30 12:39:17,529 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: bags
+2025-07-30 12:39:18,124 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 718 not found, sending to main chat
+2025-07-30 12:39:18,740 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 718
+2025-07-30 12:39:19,929 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 718 not found, sending to main chat
+2025-07-30 12:39:20,532 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 718
+2025-07-30 12:39:21,539 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: bags 2
+2025-07-30 12:39:21,993 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Alexander Wang Leather Bags
+2025-07-30 12:39:22,517 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 718 not found, sending to main chat
+2025-07-30 12:39:22,700 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 718
+2025-07-30 12:39:23,893 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 718 not found, sending to main chat
+2025-07-30 12:39:24,102 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 718
+2025-07-30 12:39:25,108 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Rick Owens
+2025-07-30 12:39:25,514 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 843 not found, sending to main chat
+2025-07-30 12:39:26,088 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 843
+2025-07-30 12:39:27,174 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 843 not found, sending to main chat
+2025-07-30 12:39:27,773 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 843
+2025-07-30 12:39:28,774 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Prada
+2025-07-30 12:39:29,125 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 747 not found, sending to main chat
+2025-07-30 12:39:29,777 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 747
+2025-07-30 12:39:30,860 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 747 not found, sending to main chat
+2025-07-30 12:39:31,515 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 747
+2025-07-30 12:39:32,518 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Isaac Selam + Boris Bidjian
+2025-07-30 12:39:32,964 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1229 not found, sending to main chat
+2025-07-30 12:39:33,124 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1229
+2025-07-30 12:39:34,205 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1229 not found, sending to main chat
+2025-07-30 12:39:34,303 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1229
+2025-07-30 12:39:35,309 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Maison Margiela + mm6
+2025-07-30 12:39:35,820 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1278 not found, sending to main chat
+2025-07-30 12:39:35,915 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1278
+2025-07-30 12:39:37,034 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1278 not found, sending to main chat
+2025-07-30 12:39:37,177 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1278
+2025-07-30 12:39:38,183 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Raf Simons + ALL
+2025-07-30 12:39:38,668 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1351 not found, sending to main chat
+2025-07-30 12:39:38,770 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1351
+2025-07-30 12:39:39,885 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 1351 not found, sending to main chat
+2025-07-30 12:39:39,986 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 1351
+2025-07-30 12:39:40,989 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Alyx
+2025-07-30 12:39:41,192 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Misbhv
+2025-07-30 12:39:41,679 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2308 not found, sending to main chat
+2025-07-30 12:39:41,809 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2308
+2025-07-30 12:39:42,898 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2308 not found, sending to main chat
+2025-07-30 12:39:43,023 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2308
+2025-07-30 12:39:44,029 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Y-3 and Y's
+2025-07-30 12:39:44,435 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2394 not found, sending to main chat
+2025-07-30 12:39:45,021 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2394
+2025-07-30 12:39:46,181 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2394 not found, sending to main chat
+2025-07-30 12:39:46,361 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2394
+2025-07-30 12:39:47,365 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Japanese Items and LUX
+2025-07-30 12:39:47,760 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:39:53,867 - vinted_scanner.py - send_telegram_topic_message():160 - ERROR - Failed to send to main chat: 429, {"ok":false,"error_code":429,"description":"Too Many Requests: retry after 3","parameters":{"retry_after":3}}
+2025-07-30 12:39:54,951 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:39:55,478 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2959
+2025-07-30 12:39:56,486 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Japanese Items and LUX #2 (типо кэрол, дорогая япония, анн демель и т.д.)
+2025-07-30 12:39:56,844 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:39:57,474 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2959
+2025-07-30 12:39:58,602 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:39:59,036 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2959
+2025-07-30 12:40:00,043 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Japanese Items and LUX #3 (том кром, дамир дома, крейг грин)
+2025-07-30 12:40:00,430 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:40:00,839 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2959
+2025-07-30 12:40:01,931 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2959 not found, sending to main chat
+2025-07-30 12:40:02,542 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2959
+2025-07-30 12:40:03,549 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: CDG + Junya
+2025-07-30 12:40:03,945 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2977 not found, sending to main chat
+2025-07-30 12:40:04,667 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2977
+2025-07-30 12:40:05,750 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 2977 not found, sending to main chat
+2025-07-30 12:40:06,248 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 2977
+2025-07-30 12:40:07,255 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: JPG + Helmut Lang
+2025-07-30 12:40:07,687 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 3412 not found, sending to main chat
+2025-07-30 12:40:08,360 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 3412
+2025-07-30 12:40:09,545 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 3412 not found, sending to main chat
+2025-07-30 12:40:10,838 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 3412
+2025-07-30 12:40:11,845 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: New Rock & Swear
+2025-07-30 12:40:12,308 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 4291 not found, sending to main chat
+2025-07-30 12:40:12,414 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 4291
+2025-07-30 12:40:13,521 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 4291 not found, sending to main chat
+2025-07-30 12:40:13,661 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 4291
+2025-07-30 12:40:14,668 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Gordon Jack
+2025-07-30 12:40:14,985 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 4291 not found, sending to main chat
+2025-07-30 12:40:15,100 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 4291
+2025-07-30 12:40:16,184 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 4291 not found, sending to main chat
+2025-07-30 12:40:16,301 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 4291
+2025-07-30 12:40:17,308 - vinted_scanner.py - scan_all_topics():211 - INFO - Scanning topic: Dolce&Gabbana верх и аксессуары
+2025-07-30 12:40:17,797 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 3540 not found, sending to main chat
+2025-07-30 12:40:18,279 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 3540
+2025-07-30 12:40:19,355 - vinted_scanner.py - send_telegram_topic_message():149 - WARNING - Thread 3540 not found, sending to main chat
+2025-07-30 12:40:19,944 - vinted_scanner.py - send_telegram_topic_message():157 - INFO - Message sent to main chat instead of thread 3540

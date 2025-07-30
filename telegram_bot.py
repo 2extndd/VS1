@@ -30,36 +30,79 @@ async def restart(update, context):
         f.write("1")
     os.execv(sys.executable, [sys.executable] + sys.argv)
 
+async def thread_id(update, context):
+    """Получить thread_id топика для ответа в чат"""
+    try:
+        if update.message and update.message.is_topic_message:
+            thread_id = update.message.message_thread_id
+            chat_title = update.message.chat.title or "Неизвестный чат"
+            topic_name = update.message.reply_to_message.forum_topic_created.name if (
+                update.message.reply_to_message and 
+                hasattr(update.message.reply_to_message, 'forum_topic_created')
+            ) else "Неизвестный топик"
+            
+            await update.message.reply_text(
+                f"📋 **Информация о топике:**\n"
+                f"• Чат: {chat_title}\n"
+                f"• Топик: {topic_name}\n"
+                f"• Thread ID: `{thread_id}`\n\n"
+                f"Скопируйте этот ID в Config.py для настройки уведомлений.",
+                parse_mode="Markdown"
+            )
+        else:
+            await update.message.reply_text(
+                "❌ Эта команда работает только в топиках форума.\n"
+                "Напишите `/thread_id` в нужном топике, чтобы получить его ID."
+            )
+    except Exception as e:
+        logging.error(f"Ошибка команды thread_id: {e}")
+        await update.message.reply_text("❌ Ошибка получения информации о топике.")
+
 async def safe_log(update, context):
-    """Безопасная команда для просмотра лога без HTML парсинга"""
-    log_file = "vinted_scanner.log"
-    if os.path.exists(log_file):
-        try:
-            with open(log_file, "r", encoding="utf-8", errors="ignore") as f:
-                lines = f.readlines()
-                # Берем последние 10 строк
-                last_lines = lines[-10:] if len(lines) >= 10 else lines
-                log_text = "".join(last_lines)
-                if log_text.strip():
-                    # Убираем все потенциально опасные символы
-                    safe_text = ""
-                    for char in log_text:
-                        if ord(char) < 128 and char.isprintable() or char in '\n\r\t':
-                            safe_text += char
-                        else:
-                            safe_text += '?'
-                    
-                    # Разбиваем на части если слишком длинное
-                    if len(safe_text) > 3500:
-                        safe_text = "..." + safe_text[-3400:]
-                    
-                    await update.message.reply_text(f"📋 Лог (последние строки):\n\n{safe_text}")
-                else:
-                    await update.message.reply_text("📋 Файл логов пуст.")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Ошибка: {str(e)[:200]}")
-    else:
-        await update.message.reply_text("❌ Файл логов не найден.")
+    """Отправляет последние 10 строк лога с очисткой от HTML тегов"""
+    try:
+        log_file_path = 'vinted_scanner.log'
+        
+        if not os.path.exists(log_file_path):
+            await update.message.reply_text("Лог файл не найден.")
+            return
+        
+        with open(log_file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+            
+        if not lines:
+            await update.message.reply_text("Лог файл пуст.")
+            return
+        
+        # Берем последние 10 строк
+        last_lines = lines[-10:]
+        
+        # Очищаем от не-ASCII символов и лишних пробелов
+        cleaned_lines = []
+        for line in last_lines:
+            # Убираем не-ASCII символы
+            clean_line = ''.join(char if ord(char) < 128 else ' ' for char in line)
+            # Убираем лишние пробелы
+            clean_line = ' '.join(clean_line.split())
+            if clean_line:  # Добавляем только непустые строки
+                cleaned_lines.append(clean_line)
+        
+        if not cleaned_lines:
+            await update.message.reply_text("Последние строки лога пусты.")
+            return
+        
+        log_content = '\n'.join(cleaned_lines)
+        
+        # Ограничиваем длину сообщения
+        if len(log_content) > 4000:
+            log_content = log_content[-4000:]
+            log_content = "...\n" + log_content
+        
+        await update.message.reply_text(f"```\n{log_content}\n```", parse_mode="Markdown")
+        
+    except Exception as e:
+        logging.error(f"Ошибка чтения лога: {e}")
+        await update.message.reply_text(f"Ошибка чтения лога: {str(e)}")
 
 async def status(update, context):
     """Улучшенная команда статуса с дополнительной информацией"""
@@ -182,7 +225,7 @@ async def help_command(update, context):
 
 📊 **Основные:**
 /status - Статус бота и статистика
-/threadid - Показать ID текущего топика
+/threadid - Получить ID топика (писать в топике)
 
 📋 **Логи:**
 /log - Последние 10 строк лога (безопасно)
@@ -193,12 +236,20 @@ async def help_command(update, context):
 /restart - Перезапустить сканер
 /help - Показать эту справку
 
-💡 **Подсказки:**
-• Используйте /safe_log если /log не работает
-• /restart очищает базу обработанных элементов
-• Все команды работают только в настроенном чате"""
+💡 **Настройка уведомлений:**
+1. Напишите `/threadid` в нужном топике
+2. Скопируйте полученный ID в Config.py
+3. Перезапустите бота командой `/restart`
+4. Если топик не найден, сообщения придут в общий чат
 
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+**Важно:** `/threadid` работает только в топиках форума!"""
+
+    try:
+        await update.message.reply_text(help_text, parse_mode="Markdown")
+    except Exception as e:
+        # Если Markdown не работает, отправим как обычный текст
+        plain_text = help_text.replace("**", "").replace("*", "")
+        await update.message.reply_text(plain_text)
 
 async def start_command(update, context):
     """Команда /start"""
@@ -221,7 +272,7 @@ def main():
     application.add_handler(CommandHandler('start', start_command))
     application.add_handler(CommandHandler('help', help_command))
     application.add_handler(CommandHandler('status', status))
-    application.add_handler(CommandHandler('threadid', threadid))
+    application.add_handler(CommandHandler('threadid', thread_id))
     
     # Команды логирования
     application.add_handler(CommandHandler('log', log))  
