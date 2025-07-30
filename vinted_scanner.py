@@ -8,6 +8,7 @@ import logging
 import requests
 import email.utils
 import os
+import random
 from datetime import datetime
 from email.message import EmailMessage
 from logging.handlers import RotatingFileHandler
@@ -32,21 +33,39 @@ logging.basicConfig(handlers=[file_handler, console_handler],
 timeoutconnection = 30
 list_analyzed_items = []
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0",
-    "Accept": "text/html,application/xhtml+xml,application/xhtml+xml,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-    "DNT": "1",
-    "Connection": "keep-alive",
-    "Upgrade-Insecure-Requests": "1",
-    "Sec-Fetch-Dest": "document",
-    "Sec-Fetch-Mode": "navigate",
-    "Sec-Fetch-Site": "cross-site",
-    "Sec-GPC": "1",
-    "Priority": "u=0, i",
-    "Pragma": "no-cache",
-    "Cache-Control": "no-cache",
-}
+# Список различных User-Agent для ротации
+user_agents = [
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:128.0) Gecko/20100101 Firefox/128.0",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+]
+
+def get_random_headers():
+    """Возвращает случайные headers для запроса"""
+    return {
+        "User-Agent": random.choice(user_agents),
+        "Accept": "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9,de;q=0.8",
+        "DNT": "1",
+        "Connection": "keep-alive",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+        "Sec-GPC": "1",
+        "Pragma": "no-cache",
+        "Cache-Control": "no-cache",
+        "Referer": f"{Config.vinted_url}/",
+    }
+
+def random_delay(min_seconds=2, max_seconds=8):
+    """Случайная задержка между запросами"""
+    delay = random.uniform(min_seconds, max_seconds)
+    logging.info(f"Random delay: {delay:.1f}s")
+    time.sleep(delay)
+
+headers = get_random_headers()
 
 def load_analyzed_item():
     list_analyzed_items.clear()
@@ -201,14 +220,30 @@ def scan_all_topics():
     load_analyzed_item()
     session = requests.Session()
     try:
-        session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
+        # Используем случайные headers
+        init_headers = get_random_headers()
+        session.get(Config.vinted_url, headers=init_headers, timeout=timeoutconnection)
+        random_delay(1, 3)  # Небольшая пауза после инициализации
     except Exception as e:
         logging.error(f"Error initializing session: {e}")
+    
     cookies = session.cookies.get_dict()
+    consecutive_403_errors = 0
+    max_403_errors = 3
 
     for topic_name, topic_info in Config.topics.items():
         try:
             logging.info(f"Scanning topic: {topic_name}")
+            
+            # Проверяем количество 403 ошибок подряд
+            if consecutive_403_errors >= max_403_errors:
+                logging.warning(f"Too many 403 errors ({consecutive_403_errors}), taking longer break...")
+                time.sleep(30)  # Длинная пауза
+                consecutive_403_errors = 0
+            
+            # Случайная задержка между топиками
+            random_delay(3, 8)
+            
             params = topic_info["query"].copy()
             # фильтруем catalog_ids
             catalog_ids = params.get("catalog_ids", "")
@@ -221,12 +256,28 @@ def scan_all_topics():
             thread_id = topic_info["thread_id"]
             data = None
             
-            response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers, timeout=timeoutconnection)
+            # Используем свежие headers для каждого запроса
+            request_headers = get_random_headers()
+            response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", 
+                                  params=params, 
+                                  cookies=cookies, 
+                                  headers=request_headers, 
+                                  timeout=timeoutconnection)
             
             # Проверяем статус ответа
-            if response.status_code != 200:
+            if response.status_code == 403:
+                consecutive_403_errors += 1
+                logging.warning(f"403 Forbidden - IP possibly blocked (consecutive: {consecutive_403_errors})")
+                logging.warning(f"Request params: {params}")
+                logging.warning(f"Taking extended break...")
+                time.sleep(20)  # Длинная пауза при 403
+                continue
+            elif response.status_code != 200:
+                consecutive_403_errors = 0  # Сбрасываем счетчик при других ошибках
                 logging.error(f"Bad response status: {response.status_code}\nRequest params: {params}\nResponse text: {response.text[:500]}")
                 continue
+            else:
+                consecutive_403_errors = 0  # Сбрасываем счетчик при успешном запросе
             
             # Проверяем content-type
             content_type = response.headers.get('content-type', '')
@@ -322,4 +373,8 @@ if __name__ == "__main__":
             break
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
-        time.sleep(5)
+        
+        # Увеличиваем базовую задержку для снижения нагрузки на Vinted
+        base_delay = random.randint(35, 50)  # Случайная задержка 35-50 секунд
+        logging.info(f"Waiting {base_delay}s before next scan cycle...")
+        time.sleep(base_delay)
