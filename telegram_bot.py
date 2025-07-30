@@ -269,6 +269,17 @@ async def start_command(update, context):
     
     await update.message.reply_text(start_text, parse_mode="Markdown")
 
+async def debug_message(update, context):
+    """Обработчик для отладки - ловит ВСЕ сообщения"""
+    try:
+        logging.info(f"DEBUG: Message received in chat {update.message.chat.id}")
+        logging.info(f"DEBUG: Chat type: {update.message.chat.type}")
+        logging.info(f"DEBUG: Message text: {update.message.text}")
+        logging.info(f"DEBUG: Thread ID: {getattr(update.message, 'message_thread_id', 'None')}")
+        logging.info(f"DEBUG: Is topic: {getattr(update.message, 'is_topic_message', 'None')}")
+    except Exception as e:
+        logging.error(f"DEBUG error: {e}")
+
 # ВАЖНО: чтобы бот отправлял только 1 сообщение в секунду,
 # в основном скрипте, где отправляются сообщения о новых вещах,
 # используйте await asyncio.sleep(1) после каждой отправки!
@@ -276,19 +287,25 @@ async def start_command(update, context):
 def main():
     application = Application.builder().token(Config.telegram_bot_token).build()
     
-    # Основные команды
-    application.add_handler(CommandHandler('start', start_command))
-    application.add_handler(CommandHandler('help', help_command))
-    application.add_handler(CommandHandler('status', status))
-    application.add_handler(CommandHandler('threadid', thread_id))
+    # Основные команды - ВАЖНО: добавляем filters для работы в топиках
+    from telegram.ext import filters
+    
+    application.add_handler(CommandHandler('start', start_command, filters=~filters.UpdateType.EDITED))
+    application.add_handler(CommandHandler('help', help_command, filters=~filters.UpdateType.EDITED))
+    application.add_handler(CommandHandler('status', status, filters=~filters.UpdateType.EDITED))
+    application.add_handler(CommandHandler('threadid', thread_id, filters=~filters.UpdateType.EDITED))
     
     # Команды логирования
-    application.add_handler(CommandHandler('log', log))  
-    application.add_handler(CommandHandler('safe_log', safe_log))  
-    application.add_handler(CommandHandler('send_log', send_log))  
+    application.add_handler(CommandHandler('log', log, filters=~filters.UpdateType.EDITED))  
+    application.add_handler(CommandHandler('safe_log', safe_log, filters=~filters.UpdateType.EDITED))  
+    application.add_handler(CommandHandler('send_log', send_log, filters=~filters.UpdateType.EDITED))  
     
     # Управление
-    application.add_handler(CommandHandler('restart', restart))
+    application.add_handler(CommandHandler('restart', restart, filters=~filters.UpdateType.EDITED))
+    
+    # DEBUG: добавляем обработчик ВСЕХ сообщений для диагностики
+    from telegram.ext import MessageHandler
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, debug_message))
     
     # application.add_handler(CommandHandler('refresh', refresh))  # удалено
     # CommandHandler('delete_old', delete_old) удален - команда больше не актуальна

@@ -242,22 +242,6 @@ topics = {
         "exclude_catalog_ids": "26, 98, 146, 139"
     },
 
-    "Gordon Jack": {
-        "thread_id": 4291,
-        "query": {
-            'page': '1',
-            'per_page': '2',
-            'search_text': 'Gordon Jack',
-            'catalog_ids': '1231',
-            'brand_ids': '',
-            'order': 'newest_first',
-            'price_to': '70',
-        },
-        "exclude_catalog_ids": "26, 98, 146, 139"
-    },
-
-
-
     "Dolce&Gabbana верх и аксессуары": {
         "thread_id": 3540,
         "query": {
