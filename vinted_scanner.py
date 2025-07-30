@@ -59,11 +59,49 @@ def get_random_headers():
         "Referer": f"{Config.vinted_url}/",
     }
 
-def random_delay(min_seconds=2, max_seconds=8):
-    """Случайная задержка между запросами"""
+def random_delay(min_seconds=0.5, max_seconds=2):
+    """Быстрая случайная задержка между запросами"""
     delay = random.uniform(min_seconds, max_seconds)
-    logging.info(f"Random delay: {delay:.1f}s")
+    logging.info(f"Quick delay: {delay:.1f}s")
     time.sleep(delay)
+
+async def notify_ban_status(ban_duration, consecutive_errors, is_recovering=False):
+    """Отправляет уведомление о бане в Telegram чат"""
+    try:
+        if is_recovering:
+            status_text = f"🔄 **Восстановление после блокировки**\n\n"
+            status_text += f"• Возобновляю сканирование\n"
+            status_text += f"• Предыдущих ошибок: {consecutive_errors}\n"
+            status_text += f"• Время паузы было: {ban_duration}с"
+        else:
+            status_text = f"🚫 **IP ЗАБЛОКИРОВАН VINTED**\n\n"
+            status_text += f"• Consecutive 403 errors: {consecutive_errors}\n"
+            status_text += f"• Пауза на: {ban_duration} секунд\n"
+            status_text += f"• Автовосстановление через: {ban_duration}с\n"
+            status_text += f"• Время блокировки: {datetime.now().strftime('%H:%M:%S')}"
+        
+        import requests
+        url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
+        requests.post(url, data={
+            "chat_id": Config.telegram_chat_id,
+            "text": status_text,
+            "parse_mode": "Markdown"
+        }, timeout=10)
+        
+        logging.info(f"Ban status notification sent: {'recovering' if is_recovering else 'blocked'}")
+    except Exception as e:
+        logging.error(f"Failed to send ban notification: {e}")
+
+def adaptive_ban_recovery(consecutive_errors):
+    """Адаптивная система восстановления после банов"""
+    if consecutive_errors <= 2:
+        return 15  # Короткая пауза для легких блокировок
+    elif consecutive_errors <= 5:
+        return 45  # Средняя пауза
+    elif consecutive_errors <= 10:
+        return 120  # Длинная пауза
+    else:
+        return 300  # Очень длинная пауза для серьезных блокировок
 
 headers = get_random_headers()
 
@@ -223,26 +261,48 @@ def scan_all_topics():
         # Используем случайные headers
         init_headers = get_random_headers()
         session.get(Config.vinted_url, headers=init_headers, timeout=timeoutconnection)
-        random_delay(1, 3)  # Небольшая пауза после инициализации
+        random_delay(0.5, 1)  # Короткая пауза после инициализации
     except Exception as e:
         logging.error(f"Error initializing session: {e}")
     
     cookies = session.cookies.get_dict()
     consecutive_403_errors = 0
     max_403_errors = 3
+    last_ban_notification = 0
 
     for topic_name, topic_info in Config.topics.items():
         try:
-            logging.info(f"Scanning topic: {topic_name}")
+            logging.info(f"🔍 Scanning topic: {topic_name}")
             
             # Проверяем количество 403 ошибок подряд
             if consecutive_403_errors >= max_403_errors:
-                logging.warning(f"Too many 403 errors ({consecutive_403_errors}), taking longer break...")
-                time.sleep(30)  # Длинная пауза
+                ban_duration = adaptive_ban_recovery(consecutive_403_errors)
+                
+                # Отправляем уведомление о бане (не чаще раз в минуту)
+                current_time = time.time()
+                if current_time - last_ban_notification > 60:
+                    try:
+                        import asyncio
+                        asyncio.run(notify_ban_status(ban_duration, consecutive_403_errors, False))
+                        last_ban_notification = current_time
+                    except Exception as e:
+                        logging.error(f"Failed to notify ban: {e}")
+                
+                logging.warning(f"🚫 IP blocked! Taking {ban_duration}s break (errors: {consecutive_403_errors})")
+                time.sleep(ban_duration)
+                
+                # Уведомление о восстановлении
+                try:
+                    import asyncio
+                    asyncio.run(notify_ban_status(ban_duration, consecutive_403_errors, True))
+                except Exception as e:
+                    logging.error(f"Failed to notify recovery: {e}")
+                
                 consecutive_403_errors = 0
+                logging.info(f"🔄 Resuming scanning after {ban_duration}s break")
             
-            # Случайная задержка между топиками
-            random_delay(3, 8)
+            # Быстрая задержка между топиками для скорости
+            random_delay(0.5, 1.5)
             
             params = topic_info["query"].copy()
             # фильтруем catalog_ids
@@ -267,17 +327,17 @@ def scan_all_topics():
             # Проверяем статус ответа
             if response.status_code == 403:
                 consecutive_403_errors += 1
-                logging.warning(f"403 Forbidden - IP possibly blocked (consecutive: {consecutive_403_errors})")
-                logging.warning(f"Request params: {params}")
-                logging.warning(f"Taking extended break...")
-                time.sleep(20)  # Длинная пауза при 403
+                logging.warning(f"⚠️ 403 Forbidden #{consecutive_403_errors} - IP rate limited")
                 continue
             elif response.status_code != 200:
                 consecutive_403_errors = 0  # Сбрасываем счетчик при других ошибках
-                logging.error(f"Bad response status: {response.status_code}\nRequest params: {params}\nResponse text: {response.text[:500]}")
+                logging.error(f"❌ Bad response status: {response.status_code}")
                 continue
             else:
-                consecutive_403_errors = 0  # Сбрасываем счетчик при успешном запросе
+                # Успешный запрос - сбрасываем счетчик ошибок
+                if consecutive_403_errors > 0:
+                    logging.info(f"✅ Request successful after {consecutive_403_errors} errors - recovery complete")
+                consecutive_403_errors = 0
             
             # Проверяем content-type
             content_type = response.headers.get('content-type', '')
@@ -365,6 +425,19 @@ def main():
 
 if __name__ == "__main__":
     subprocess.Popen(["python3", "telegram_bot.py"])
+    
+    # Отправляем уведомление о запуске
+    try:
+        import requests
+        url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
+        requests.post(url, data={
+            "chat_id": Config.telegram_chat_id,
+            "text": f"🚀 **VintedScanner запущен!**\n\n⚡ Быстрый режим: проверки каждые 5-10 секунд\n🛡️ Авто-восстановление после банов\n📊 19 топиков активно\n\n🕐 Запуск: {datetime.now().strftime('%H:%M:%S')}",
+            "parse_mode": "Markdown"
+        }, timeout=10)
+    except:
+        pass
+    
     while True:
         try:
             main()
@@ -374,7 +447,7 @@ if __name__ == "__main__":
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
         
-        # Увеличиваем базовую задержку для снижения нагрузки на Vinted
-        base_delay = random.randint(35, 50)  # Случайная задержка 35-50 секунд
-        logging.info(f"Waiting {base_delay}s before next scan cycle...")
-        time.sleep(base_delay)
+        # БЫСТРЫЙ режим: 5-10 секунд между циклами для 60 проверок в час
+        quick_delay = random.randint(5, 10)
+        logging.info(f"⚡ Next scan in {quick_delay}s (Quick mode: 60 checks/hour)")
+        time.sleep(quick_delay)
