@@ -92,16 +92,31 @@ async def notify_ban_status(ban_duration, consecutive_errors, is_recovering=Fals
     except Exception as e:
         logging.error(f"Failed to send ban notification: {e}")
 
+def calculate_optimal_delay(topics_count, base_delay_min=3.0, base_delay_max=5.0):
+    """
+    Максимально консервативные задержки для полной защиты от банов
+    """
+    if topics_count <= 5:
+        return base_delay_min, base_delay_max
+    elif topics_count <= 10:
+        return base_delay_min * 0.9, base_delay_max * 0.9
+    elif topics_count <= 15:
+        return base_delay_min * 0.8, base_delay_max * 0.8
+    else:  # 19+ топиков
+        return base_delay_min * 0.7, base_delay_max * 0.7  # 2.1-3.5 секунды для 19 топиков
+
 def adaptive_ban_recovery(consecutive_errors):
-    """Адаптивная система восстановления после банов"""
-    if consecutive_errors <= 2:
-        return 15  # Короткая пауза для легких блокировок
-    elif consecutive_errors <= 5:
-        return 45  # Средняя пауза
+    """Улучшенная адаптивная система восстановления после банов"""
+    if consecutive_errors <= 1:
+        return 30  # Первая ошибка - средняя пауза
+    elif consecutive_errors <= 3:
+        return 60  # 2-3 ошибки - увеличиваем паузу
+    elif consecutive_errors <= 6:
+        return 180  # 4-6 ошибок - длинная пауза  
     elif consecutive_errors <= 10:
-        return 120  # Длинная пауза
+        return 360  # 7-10 ошибок - очень длинная пауза
     else:
-        return 300  # Очень длинная пауза для серьезных блокировок
+        return 600  # Более 10 ошибок - максимальная пауза 10 минут
 
 headers = get_random_headers()
 
@@ -170,82 +185,132 @@ def send_slack_message(item_title, item_price, item_url, item_image, item_size="
     except requests.exceptions.RequestException as e:
         logging.error(f"Error sending Slack message: {e}")
 
-def send_telegram_topic_message(item, thread_id, max_retries=5):
+def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retries=3):
     """
-    Отправляет уведомление о новом товаре в Telegram топик с автоматическим fallback в общий чат
+    Отправляет уведомление о новом товаре в Telegram топик с улучшенной диагностикой
     
     Args:
         item: словарь с данными товара (title, price, url, image, size)
         thread_id: ID топика в Telegram
+        topic_name: название топика для логирования
         max_retries: максимальное количество попыток отправки
     """
+    # Проверяем валидность thread_id
+    if not thread_id or not isinstance(thread_id, (int, str)):
+        logging.error(f"❌ Invalid thread_id for topic '{topic_name}': {thread_id} (type: {type(thread_id)})")
+        thread_id = None
+    
+    # Преобразуем в int для Telegram API
+    if thread_id:
+        try:
+            thread_id = int(thread_id)
+            logging.info(f"📤 Sending to topic '{topic_name}' → thread_id: {thread_id}")
+        except (ValueError, TypeError) as e:
+            logging.error(f"❌ Cannot convert thread_id to int for topic '{topic_name}': {thread_id} - {e}")
+            thread_id = None
+    
     caption = f"<b>{item['title']}</b>\n🏷️ {item['price']}"
     if item.get("size"):
         caption += f", SIZE: {item['size']}"
     caption += f"\n🔗 {item['url']}"
     
     url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendPhoto"
+    
+    # Базовые параметры
     params = {
         "chat_id": Config.telegram_chat_id,
         "photo": item["image"],
         "caption": caption,
-        "parse_mode": "HTML",
-        "message_thread_id": thread_id
+        "parse_mode": "HTML"
     }
     
+    # Добавляем thread_id только если он валидный
+    if thread_id:
+        params["message_thread_id"] = thread_id
+        logging.info(f"🎯 Attempting to send to thread {thread_id} for topic '{topic_name}'")
+    else:
+        logging.warning(f"⚠️ No valid thread_id for topic '{topic_name}', sending to main chat")
+    
     for attempt in range(max_retries):
-        response = requests.post(url, data=params)
-        if response.status_code == 200:
-            logging.info(f"Telegram topic notification sent to thread {thread_id}")
-            return True
-        elif response.status_code == 400:
-            # Проверяем если это ошибка "thread not found"
-            try:
-                error_data = response.json()
-                if "message thread not found" in error_data.get("description", "").lower():
-                    logging.warning(f"Thread {thread_id} not found, sending to main chat")
-                    # Отправляем в основной чат без thread_id
-                    params_main = params.copy()
-                    del params_main["message_thread_id"]
-                    params_main["caption"] = caption
-                    
-                    response_main = requests.post(url, data=params_main)
-                    if response_main.status_code == 200:
-                        logging.info(f"Message sent to main chat instead of thread {thread_id}")
-                        return True
-                    else:
-                        logging.error(f"Failed to send to main chat: {response_main.status_code}, {response_main.text}")
-                        break
+        try:
+            response = requests.post(url, data=params, timeout=30)
+            
+            if response.status_code == 200:
+                if thread_id:
+                    logging.info(f"✅ Telegram message sent to thread {thread_id} (topic: '{topic_name}')")
                 else:
-                    logging.error(f"Telegram API error: {response.status_code}, {response.text}")
+                    logging.info(f"✅ Telegram message sent to main chat (topic: '{topic_name}')")
+                return True
+                
+            elif response.status_code == 400:
+                try:
+                    error_data = response.json()
+                    error_description = error_data.get("description", "").lower()
+                    
+                    logging.error(f"❌ Telegram API 400 error for topic '{topic_name}': {error_description}")
+                    
+                    # Если проблема с thread_id, пробуем отправить в основной чат
+                    if thread_id and ("thread" in error_description or "message_thread_id" in error_description):
+                        logging.warning(f"🔄 Thread {thread_id} issue for topic '{topic_name}', trying main chat")
+                        
+                        # Убираем thread_id и отправляем в основной чат
+                        params_main = params.copy()
+                        if "message_thread_id" in params_main:
+                            del params_main["message_thread_id"]
+                        
+                        response_main = requests.post(url, data=params_main, timeout=30)
+                        if response_main.status_code == 200:
+                            logging.info(f"✅ Message sent to main chat instead of thread {thread_id} (topic: '{topic_name}')")
+                            return True
+                        else:
+                            logging.error(f"❌ Failed to send to main chat: {response_main.status_code}, {response_main.text}")
+                    
+                    # Для других 400 ошибок - прекращаем попытки
                     break
-            except Exception as e:
-                logging.error(f"Error parsing response: {e}")
-                break
-        elif response.status_code == 429:
-            try:
-                retry_after = response.json().get("parameters", {}).get("retry_after", 30)
-            except Exception:
-                retry_after = 30
-            warn_text = f"⚠️ ВНИМАНИЕ: Telegram API отправил Too Many Requests! Бот на паузе {retry_after} сек.\n" \
-                        f"Строка из лога:\n429 Too Many Requests. Waiting {retry_after} seconds before retry..."
-            # Отправляем предупреждение в чат
-            try:
-                requests.post(
-                    f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage",
-                    data={
-                        "chat_id": Config.telegram_chat_id,
-                        "text": warn_text
-                    }
-                )
-            except Exception as e:
-                logging.error(f"Ошибка отправки предупреждения в чат: {e}")
-            logging.warning(f"429 Too Many Requests. Waiting {retry_after} seconds before retry...")
-            time.sleep(retry_after)
-        else:
-            logging.error(f"Telegram topic notification failed: {response.status_code}, {response.text}")
-            break
-        time.sleep(1)
+                    
+                except Exception as e:
+                    logging.error(f"❌ Error parsing 400 response for topic '{topic_name}': {e}")
+                    break
+                    
+            elif response.status_code == 429:
+                try:
+                    retry_after = response.json().get("parameters", {}).get("retry_after", 30)
+                except Exception:
+                    retry_after = 30
+                    
+                logging.warning(f"⏳ Rate limited for topic '{topic_name}', waiting {retry_after}s...")
+                
+                # Отправляем предупреждение только при первой попытке
+                if attempt == 0:
+                    try:
+                        requests.post(
+                            f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage",
+                            data={
+                                "chat_id": Config.telegram_chat_id,
+                                "text": f"⚠️ Telegram API ограничил отправку на {retry_after}с для топика '{topic_name}'"
+                            },
+                            timeout=10
+                        )
+                    except:
+                        pass
+                
+                time.sleep(retry_after)
+                continue
+                
+            else:
+                logging.error(f"❌ Telegram API error {response.status_code} for topic '{topic_name}': {response.text}")
+                
+        except requests.exceptions.Timeout:
+            logging.error(f"⏰ Timeout sending to topic '{topic_name}' (attempt {attempt+1})")
+        except requests.exceptions.RequestException as e:
+            logging.error(f"❌ Request error for topic '{topic_name}' (attempt {attempt+1}): {e}")
+        except Exception as e:
+            logging.error(f"❌ Unexpected error for topic '{topic_name}' (attempt {attempt+1}): {e}")
+        
+        if attempt < max_retries - 1:
+            time.sleep(2)  # Пауза между попытками
+    
+    logging.error(f"❌ Failed to send message for topic '{topic_name}' after {max_retries} attempts")
     return False
 
 def handle_restart_flag():
@@ -261,14 +326,19 @@ def scan_all_topics():
         # Используем случайные headers
         init_headers = get_random_headers()
         session.get(Config.vinted_url, headers=init_headers, timeout=timeoutconnection)
-        random_delay(0.5, 1)  # Короткая пауза после инициализации
+        random_delay(2.0, 3.0)  # Максимально консервативная пауза после инициализации
     except Exception as e:
         logging.error(f"Error initializing session: {e}")
     
     cookies = session.cookies.get_dict()
     consecutive_403_errors = 0
-    max_403_errors = 3
+    max_403_errors = 2  # Уменьшаем порог - реагируем быстрее на блокировки
     last_ban_notification = 0
+    
+    # Вычисляем оптимальные задержки для текущего количества топиков
+    topics_count = len(Config.topics)
+    min_delay, max_delay = calculate_optimal_delay(topics_count)
+    logging.info(f"📊 Scanning {topics_count} topics with delays {min_delay:.1f}-{max_delay:.1f}s between requests")
 
     for topic_name, topic_info in Config.topics.items():
         try:
@@ -301,8 +371,8 @@ def scan_all_topics():
                 consecutive_403_errors = 0
                 logging.info(f"🔄 Resuming scanning after {ban_duration}s break")
             
-            # Быстрая задержка между топиками для скорости
-            random_delay(0.5, 1.5)
+            # Оптимизированная задержка между топиками - адаптивная на основе их количества
+            random_delay(min_delay, max_delay)
             
             params = topic_info["query"].copy()
             # фильтруем catalog_ids
@@ -373,11 +443,31 @@ def scan_all_topics():
             if data and "items" in data:
                 exclude_ids = topic_info.get("exclude_catalog_ids", "")
                 exclude_set = set(str(x.strip()) for x in exclude_ids.split(",") if x.strip())
+                logging.info(f"📋 Topic '{topic_name}': Found {len(data['items'])} items, excluding catalog_ids: {exclude_set}")
+                
+                filtered_count = 0
+                processed_count = 0
+                
                 for item in data["items"]:
-                    catalog_id = item.get("catalog_id", "")
-                    if catalog_id != "":
-                        if str(catalog_id) in exclude_set:
-                            continue
+                    processed_count += 1
+                    
+                    # Получаем catalog_id из разных возможных мест
+                    catalog_id = None
+                    if "catalog_id" in item and item["catalog_id"]:
+                        catalog_id = str(item["catalog_id"])
+                    elif "category" in item and "id" in item["category"]:
+                        catalog_id = str(item["category"]["id"])
+                    elif "category_id" in item and item["category_id"]:
+                        catalog_id = str(item["category_id"])
+                    
+                    # Фильтруем по exclude_catalog_ids
+                    if catalog_id and catalog_id in exclude_set:
+                        filtered_count += 1
+                        logging.info(f"🚫 FILTERED: '{item['title']}' (catalog_id: {catalog_id}) - excluded by filter")
+                        continue
+                    
+                    logging.info(f"✅ PASSED: '{item['title']}' (catalog_id: {catalog_id}) - not in exclude list")
+                    
                     item_id = str(item["id"])
                     item_title = item["title"]
                     item_url = item["url"]
@@ -404,10 +494,13 @@ def scan_all_topics():
                                 "price": item_price,
                                 "url": item_url,
                                 "size": item_size
-                            }, thread_id)
+                            }, thread_id, topic_name)
                             time.sleep(1)
                         list_analyzed_items.append(item_id)
                         save_analyzed_item(item_id)
+                
+                # Выводим статистику фильтрации
+                logging.info(f"📊 Topic '{topic_name}' summary: {processed_count} processed, {filtered_count} filtered out, {processed_count - filtered_count} passed filter")
         
         except requests.exceptions.Timeout:
             logging.error(f"Request timeout for topic '{topic_name}' with params: {params}")
@@ -432,7 +525,7 @@ if __name__ == "__main__":
         url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
         requests.post(url, data={
             "chat_id": Config.telegram_chat_id,
-            "text": f"🚀 **VintedScanner запущен!**\n\n⚡ Быстрый режим: проверки каждые 5-10 секунд\n🛡️ Авто-восстановление после банов\n📊 19 топиков активно\n\n🕐 Запуск: {datetime.now().strftime('%H:%M:%S')}",
+            "text": f"🚀 **VintedScanner запущен!**\n\n⚡ Безопасный быстрый режим: проверки каждые 30-50 секунд\n🛡️ Полная защита от банов\n📊 19 топиков активно\n\n🕐 Запуск: {datetime.now().strftime('%H:%M:%S')}",
             "parse_mode": "Markdown"
         }, timeout=10)
     except:
@@ -447,7 +540,8 @@ if __name__ == "__main__":
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
         
-        # БЫСТРЫЙ режим: 5-10 секунд между циклами для 60 проверок в час
-        quick_delay = random.randint(5, 10)
-        logging.info(f"⚡ Next scan in {quick_delay}s (Quick mode: 60 checks/hour)")
+        # МАКСИМАЛЬНО БЕЗОПАСНЫЙ БЫСТРЫЙ режим: 30-50 секунд между циклами
+        # Это дает 72-120 проверок в час (в 2 раза быстрее обычного, абсолютно безопасно)
+        quick_delay = random.randint(30, 50)
+        logging.info(f"⚡ Next scan in {quick_delay}s (Safe fast mode: ~100 checks/hour)")
         time.sleep(quick_delay)

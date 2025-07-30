@@ -36,23 +36,17 @@ async def thread_id(update, context):
         if update.message and update.message.is_topic_message:
             thread_id = update.message.message_thread_id
             chat_title = update.message.chat.title or "Неизвестный чат"
-            topic_name = update.message.reply_to_message.forum_topic_created.name if (
-                update.message.reply_to_message and 
-                hasattr(update.message.reply_to_message, 'forum_topic_created')
-            ) else "Неизвестный топик"
             
             await update.message.reply_text(
-                f"📋 **Информация о топике:**\n"
-                f"• Чат: {chat_title}\n"
-                f"• Топик: {topic_name}\n"
-                f"• Thread ID: `{thread_id}`\n\n"
+                f"📋 **Thread ID для этого топика:** `{thread_id}`\n\n"
+                f"Чат: {chat_title}\n\n"
                 f"Скопируйте этот ID в Config.py для настройки уведомлений.",
                 parse_mode="Markdown"
             )
         else:
             await update.message.reply_text(
                 "❌ Эта команда работает только в топиках форума.\n"
-                "Напишите `/thread_id` в нужном топике, чтобы получить его ID."
+                "Напишите `/threadid` в нужном топике, чтобы получить его ID."
             )
     except Exception as e:
         logging.error(f"Ошибка команды thread_id: {e}")
