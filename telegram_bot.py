@@ -33,67 +33,27 @@ async def restart(update, context):
 async def thread_id(update, context):
     """Получить thread_id топика для ответа в чат"""
     try:
-        message = update.message
-        chat = message.chat
-        
-        # Более надежная проверка на топик
-        thread_id = getattr(message, 'message_thread_id', None)
-        is_forum = getattr(chat, 'is_forum', False)
-        
-        logging.info(f"📋 /threadid command called:")
-        logging.info(f"  - Chat ID: {chat.id}")
-        logging.info(f"  - Chat type: {chat.type}")
-        logging.info(f"  - Is forum: {is_forum}")
-        logging.info(f"  - Thread ID: {thread_id}")
-        logging.info(f"  - Message ID: {message.message_id}")
-        
-        if thread_id and is_forum:
-            chat_title = chat.title or "Неизвестный чат"
-            topic_title = getattr(message, 'reply_to_message', {})
-            if hasattr(topic_title, 'forum_topic_created'):
-                topic_name = topic_title.forum_topic_created.name
-            else:
-                topic_name = "Неизвестный топик"
+        if update.message and update.message.is_topic_message:
+            thread_id = update.message.message_thread_id
+            chat_title = update.message.chat.title or "Неизвестный чат"
+            topic_name = update.message.reply_to_message.forum_topic_created.name if (
+                update.message.reply_to_message and 
+                hasattr(update.message.reply_to_message, 'forum_topic_created')
+            ) else "Неизвестный топик"
             
-            await message.reply_text(
-                f"✅ **Thread ID получен!**\n\n"
-                f"🆔 Thread ID: `{thread_id}`\n"
-                f"💬 Топик: {topic_name}\n"
-                f"🏠 Чат: {chat_title}\n\n"
-                f"📋 Скопируйте этот ID в Config.py для настройки уведомлений.",
+            await update.message.reply_text(
+                f"📋 **Информация о топике:**\n"
+                f"• Чат: {chat_title}\n"
+                f"• Топик: {topic_name}\n"
+                f"• Thread ID: `{thread_id}`\n\n"
+                f"Скопируйте этот ID в Config.py для настройки уведомлений.",
                 parse_mode="Markdown"
-            )
-            
-            # Дополнительно отправим в основной чат для удобства
-            await context.bot.send_message(
-                chat_id=chat.id,
-                text=f"🔧 **Thread ID найден для топика:**\n\n`{thread_id}` - {topic_name}",
-                parse_mode="Markdown"
-            )
-            
-        elif is_forum:
-            await message.reply_text(
-                "⚠️ **Команда выполнена в форуме, но thread_id не найден**\n\n"
-                "Попробуйте:\n"
-                "• Написать команду внутри топика (не в основном чате)\n"
-                "• Создать новое сообщение в топике\n"
-                "• Проверить права бота в топике"
             )
         else:
-            await message.reply_text(
-                "❌ **Эта команда работает только в топиках форума**\n\n"
-                "📍 Инструкция:\n"
-                "1. Перейдите в нужный топик форума\n"
-                "2. Напишите `/threadid` в топике\n"
-                "3. Скопируйте полученный ID в Config.py"
+            await update.message.reply_text(
+                "❌ Эта команда работает только в топиках форума.\n"
+                "Напишите `/thread_id` в нужном топике, чтобы получить его ID."
             )
-            
-    except Exception as e:
-        logging.error(f"❌ Error in thread_id command: {e}", exc_info=True)
-        await message.reply_text(
-            f"❌ **Ошибка получения thread_id:**\n\n`{str(e)}`\n\n"
-            f"Обратитесь к администратору для решения проблемы."
-        )
     except Exception as e:
         logging.error(f"Ошибка команды thread_id: {e}")
         await update.message.reply_text("❌ Ошибка получения информации о топике.")
