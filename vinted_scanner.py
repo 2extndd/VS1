@@ -15,17 +15,8 @@ import subprocess
 
 RESTART_FLAG = "bot_restarted.flag"
 
-# Настройка логирования - вывод в файл И в консоль для RailWay
-file_handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
-console_handler = logging.StreamHandler(sys.stdout)
-
-# Форматирование для обоих обработчиков
-formatter = logging.Formatter("%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s")
-file_handler.setFormatter(formatter)
-console_handler.setFormatter(formatter)
-
-# Настройка корневого логгера
-logging.basicConfig(handlers=[file_handler, console_handler],
+handler = RotatingFileHandler("vinted_scanner.log", maxBytes=5000000, backupCount=5)
+logging.basicConfig(handlers=[handler],
                     format="%(asctime)s - %(filename)s - %(funcName)10s():%(lineno)s - %(levelname)s - %(message)s",
                     level=logging.INFO)
 
@@ -136,19 +127,6 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
                 retry_after = response.json().get("parameters", {}).get("retry_after", 30)
             except Exception:
                 retry_after = 30
-            warn_text = f"⚠️ ВНИМАНИЕ: Telegram API отправил Too Many Requests! Бот на паузе {retry_after} сек.\n" \
-                        f"Строка из лога:\n429 Too Many Requests. Waiting {retry_after} seconds before retry..."
-            # Отправляем предупреждение в чат
-            try:
-                requests.post(
-                    f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage",
-                    data={
-                        "chat_id": Config.telegram_chat_id,
-                        "text": warn_text
-                    }
-                )
-            except Exception as e:
-                logging.error(f"Ошибка отправки предупреждения в чат: {e}")
             logging.warning(f"429 Too Many Requests. Waiting {retry_after} seconds before retry...")
             time.sleep(retry_after)
         else:
@@ -160,132 +138,66 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
 def handle_restart_flag():
     if os.path.exists(RESTART_FLAG):
         logging.info("=== VintedScanner script was restarted by Telegram command ===")
+        with open("vinted_items.txt", "w") as f:
+            f.write("")
         os.remove(RESTART_FLAG)
         # НЕ отправляем старые вещи после перезапуска!
 
 def scan_all_topics():
     load_analyzed_item()
     session = requests.Session()
-    try:
-        session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
-    except Exception as e:
-        logging.error(f"Error initializing session: {e}")
+    session.post(Config.vinted_url, headers=headers, timeout=timeoutconnection)
     cookies = session.cookies.get_dict()
 
     for topic_name, topic_info in Config.topics.items():
+        params = topic_info["query"]
+        thread_id = topic_info["thread_id"]
         try:
-            logging.info(f"Scanning topic: {topic_name}")
-            params = topic_info["query"].copy()
-            # фильтруем catalog_ids
-            catalog_ids = params.get("catalog_ids", "")
-            exclude_ids = topic_info.get("exclude_catalog_ids", "")
-            if catalog_ids:
-                ids = [x.strip() for x in catalog_ids.split(",") if x.strip()]
-                exclude = [x.strip() for x in exclude_ids.split(",") if x.strip()]
-                filtered = [x for x in ids if x not in exclude]
-                params["catalog_ids"] = ",".join(filtered)
-            thread_id = topic_info["thread_id"]
-            data = None
-            
-            response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers, timeout=timeoutconnection)
-            
-            # Проверяем статус ответа
-            if response.status_code != 200:
-                logging.error(f"Bad response status: {response.status_code}\nRequest params: {params}\nResponse text: {response.text[:500]}")
-                continue
-            
-            # Проверяем content-type
-            content_type = response.headers.get('content-type', '')
-            if 'application/json' not in content_type:
-                logging.error(f"Non-JSON response received\nContent-Type: {content_type}\nStatus: {response.status_code}\nParams: {params}\nResponse: {response.text[:500]}")
-                continue
-            
-            # Проверяем что ответ не пустой
-            if not response.text.strip():
-                logging.error(f"Empty response received\nStatus: {response.status_code}\nParams: {params}")
-                continue
-            
-            # Пробуем декодировать JSON
-            try:
-                data = response.json()
-            except Exception as json_error:
-                logging.error(f"JSONDecodeError: {json_error}\nStatus code: {response.status_code}\nContent-Type: {content_type}\nRequest params: {params}\nResponse text: {response.text[:500]}", exc_info=True)
-                continue
+            response = requests.get(f"{Config.vinted_url}/api/v2/catalog/items", params=params, cookies=cookies, headers=headers)
+            data = response.json()
+        except Exception as e:
+            logging.error(f"Request error: {e}", exc_info=True)
+            continue
 
-            # Проверяем что data получен и валиден
-            if not data:
-                logging.error(f"No data received for params: {params}")
-                continue
-                
-            if not isinstance(data, dict):
-                logging.error(f"Invalid data format (not dict): {type(data)}\nParams: {params}")
-                continue
-                
-            if "items" not in data:
-                logging.error(f"No 'items' field in response\nData keys: {list(data.keys()) if isinstance(data, dict) else 'N/A'}\nParams: {params}")
-                continue
-
-            if data and "items" in data:
-                exclude_ids = topic_info.get("exclude_catalog_ids", "")
-                exclude_set = set(str(x.strip()) for x in exclude_ids.split(",") if x.strip())
-                for item in data["items"]:
-                    catalog_id = item.get("catalog_id", "")
-                    if catalog_id != "":
-                        if str(catalog_id) in exclude_set:
-                            continue
-                    item_id = str(item["id"])
-                    item_title = item["title"]
-                    item_url = item["url"]
-                    item_price = f'{item["price"]["amount"]} {item["price"]["currency_code"]}'
-                    item_image = item["photo"]["full_size_url"]
-                    # Получаем размер, если есть
-                    item_size = ""
-                    if "size_title" in item and item["size_title"]:
-                        item_size = item["size_title"]
-                    elif "size" in item and item["size"]:
-                        item_size = item["size"]
-                    # Отправляем только новые вещи
-                    if item_id not in list_analyzed_items:
-                        if Config.smtp_username and Config.smtp_server:
-                            send_email(item_title, item_price, item_url, item_image, item_size)
-                            time.sleep(1)
-                        if Config.slack_webhook_url:
-                            send_slack_message(item_title, item_price, item_url, item_image, item_size)
-                            time.sleep(1)
-                        if Config.telegram_bot_token and Config.telegram_chat_id:
-                            send_telegram_topic_message({
-                                "image": item_image,
-                                "title": item_title,
-                                "price": item_price,
-                                "url": item_url,
-                                "size": item_size
-                            }, thread_id)
-                            time.sleep(1)
-                        list_analyzed_items.append(item_id)
-                        save_analyzed_item(item_id)
-        
-        except requests.exceptions.Timeout:
-            logging.error(f"Request timeout for topic '{topic_name}' with params: {params}")
-        except requests.exceptions.RequestException as e:
-            logging.error(f"Request error for topic '{topic_name}': {e}\nParams: {params}", exc_info=True)
-        except Exception as topic_error:
-            logging.error(f"Error processing topic '{topic_name}': {topic_error}", exc_info=True)
+        if data and "items" in data:
+            for item in data["items"]:
+                item_id = str(item["id"])
+                item_title = item["title"]
+                item_url = item["url"]
+                item_price = f'{item["price"]["amount"]} {item["price"]["currency_code"]}'
+                item_image = item["photo"]["full_size_url"]
+                # Получаем размер, если есть
+                item_size = ""
+                if "size_title" in item and item["size_title"]:
+                    item_size = item["size_title"]
+                elif "size" in item and item["size"]:
+                    item_size = item["size"]
+                # Отправляем только новые вещи
+                if item_id not in list_analyzed_items:
+                    if Config.smtp_username and Config.smtp_server:
+                        send_email(item_title, item_price, item_url, item_image, item_size)
+                        time.sleep(1)
+                    if Config.slack_webhook_url:
+                        send_slack_message(item_title, item_price, item_url, item_image, item_size)
+                        time.sleep(1)
+                    if Config.telegram_bot_token and Config.telegram_chat_id:
+                        send_telegram_topic_message({
+                            "image": item_image,
+                            "title": item_title,
+                            "price": item_price,
+                            "url": item_url,
+                            "size": item_size
+                        }, thread_id)
+                        time.sleep(1)
+                    list_analyzed_items.append(item_id)
+                    save_analyzed_item(item_id)
 
 def main():
     handle_restart_flag()
-    try:
-        scan_all_topics()
-    except Exception as e:
-        logging.error(f"Error in scan_all_topics: {e}", exc_info=True)
+    scan_all_topics()
 
 if __name__ == "__main__":
     subprocess.Popen(["python3", "telegram_bot.py"])
     while True:
-        try:
-            main()
-        except KeyboardInterrupt:
-            logging.info("Scanner stopped by user")
-            break
-        except Exception as e:
-            logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
+        main()
         time.sleep(5)
