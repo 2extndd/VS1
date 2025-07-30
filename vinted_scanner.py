@@ -150,7 +150,7 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
                     # Отправляем в основной чат без thread_id
                     params_main = params.copy()
                     del params_main["message_thread_id"]
-                    params_main["caption"] = f"[Топик {thread_id}] " + caption
+                    params_main["caption"] = caption
                     
                     response_main = requests.post(url, data=params_main)
                     if response_main.status_code == 200:
