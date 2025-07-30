@@ -31,10 +31,17 @@ async def restart(update, context):
     os.execv(sys.executable, [sys.executable] + sys.argv)
 
 async def status(update, context):
+    thread_id = update.message.message_thread_id
+    chat_id = update.message.chat_id
+    logging.info(f"status command: chat_id={chat_id}, thread_id={thread_id}")
     await update.message.reply_text("Пашет пиздато!")
 
 async def threadid(update, context):
-    await update.message.reply_text(f"thread_id: {update.message.message_thread_id}")
+    thread_id = update.message.message_thread_id
+    chat_id = update.message.chat_id
+    message_id = update.message.message_id
+    logging.info(f"threadid command: chat_id={chat_id}, thread_id={thread_id}, message_id={message_id}")
+    await update.message.reply_text(f"thread_id: {thread_id}\nchat_id: {chat_id}")
 
 async def send_log(update, context):
     log_file = "vinted_scanner.log"
@@ -90,8 +97,8 @@ def main():
     application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
     application.add_handler(CommandHandler('log', log))  # команда для последних 10 строк лога
     application.post_init = notify_start
-    # Включаем поддержку форум-топиков
-    application.run_polling(allowed_updates=["message", "forum_topic_created", "forum_topic_closed", "forum_topic_reopened"])
+    # Убираем ограничения allowed_updates для лучшей совместимости
+    application.run_polling()
 
 if __name__ == '__main__':
     main()

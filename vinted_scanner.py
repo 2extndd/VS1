@@ -133,6 +133,8 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
         thread_id_int = int(thread_id)
     except Exception:
         thread_id_int = thread_id
+    
+    # Отправляем через GET параметры для URL изображений
     params = {
         "chat_id": Config.telegram_chat_id,
         "photo": item["image"],
@@ -140,9 +142,11 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
         "parse_mode": "HTML",
         "message_thread_id": thread_id_int
     }
+    
     for attempt in range(max_retries):
-        response = requests.post(url, data=params)
-        logging.info(f"Telegram API call: status {response.status_code} for thread_id {thread_id_int}")
+        # Используем GET запрос для отправки через URL
+        response = requests.get(url, params=params)
+        logging.info(f"Telegram API GET call: status {response.status_code} for thread_id {thread_id_int}")
         if response.status_code == 200:
             logging.info(f"Telegram topic notification sent to thread {thread_id_int}")
             return True
@@ -150,22 +154,13 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
             # Проверяем если это ошибка "thread not found"
             try:
                 error_data = response.json()
-                if "message thread not found" in error_data.get("description", "").lower():
-                    logging.warning(f"Thread {thread_id} not found, sending to main chat")
-                    # Отправляем в основной чат без thread_id
-                    params_main = params.copy()
-                    del params_main["message_thread_id"]
-                    params_main["caption"] = caption
-                    
-                    response_main = requests.post(url, data=params_main)
-                    if response_main.status_code == 200:
-                        logging.info(f"Message sent to main chat instead of thread {thread_id}")
-                        return True
-                    else:
-                        logging.error(f"Failed to send to main chat: {response_main.status_code}, {response_main.text}")
-                        break
+                error_desc = error_data.get("description", "").lower()
+                logging.error(f"Telegram API 400 error: {error_desc}")
+                if "message thread not found" in error_desc or "topic not found" in error_desc:
+                    logging.warning(f"Thread {thread_id_int} not found - НЕ отправляем в main chat!")
+                    return False  # НЕ отправляем в main chat!
                 else:
-                    logging.error(f"Telegram API error: {response.status_code}, {response.text}")
+                    logging.error(f"Other Telegram API error: {response.status_code}, {response.text}")
                     break
             except Exception as e:
                 logging.error(f"Error parsing response: {e}")
