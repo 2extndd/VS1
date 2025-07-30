@@ -138,6 +138,8 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
     
     for attempt in range(max_retries):
         response = requests.post(url, data=params)
+        logging.info(f"Telegram API call: status {response.status_code} for thread_id {thread_id}")
+        
         if response.status_code == 200:
             logging.info(f"Telegram topic notification sent to thread {thread_id}")
             return True
@@ -280,6 +282,7 @@ def scan_all_topics():
                         item_size = item["size"]
                     # Отправляем только новые вещи
                     if item_id not in list_analyzed_items:
+                        logging.info(f"NEW ITEM FOUND: {item_title} - sending to thread {thread_id}")
                         if Config.smtp_username and Config.smtp_server:
                             send_email(item_title, item_price, item_url, item_image, item_size)
                             time.sleep(1)
