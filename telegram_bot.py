@@ -33,6 +33,12 @@ async def restart(update, context):
 async def thread_id(update, context):
     """Получить thread_id топика для ответа в чат"""
     try:
+        logging.info(f"thread_id command called in chat {update.message.chat.id}")
+        logging.info(f"Chat type: {update.message.chat.type}")
+        logging.info(f"Is forum: {getattr(update.message.chat, 'is_forum', 'N/A')}")
+        logging.info(f"Message thread id: {getattr(update.message, 'message_thread_id', 'N/A')}")
+        logging.info(f"Is topic message: {getattr(update.message, 'is_topic_message', 'N/A')}")
+        
         if update.message and update.message.is_topic_message:
             thread_id = update.message.message_thread_id
             chat_title = update.message.chat.title or "Неизвестный чат"
@@ -40,6 +46,8 @@ async def thread_id(update, context):
                 update.message.reply_to_message and 
                 hasattr(update.message.reply_to_message, 'forum_topic_created')
             ) else "Неизвестный топик"
+            
+            logging.info(f"Found thread_id: {thread_id} for topic: {topic_name}")
             
             await update.message.reply_text(
                 f"📋 **Информация о топике:**\n"
@@ -52,11 +60,11 @@ async def thread_id(update, context):
         else:
             await update.message.reply_text(
                 "❌ Эта команда работает только в топиках форума.\n"
-                "Напишите `/thread_id` в нужном топике, чтобы получить его ID."
+                "Напишите `/threadid` в нужном топике, чтобы получить его ID."
             )
     except Exception as e:
-        logging.error(f"Ошибка команды thread_id: {e}")
-        await update.message.reply_text("❌ Ошибка получения информации о топике.")
+        logging.error(f"Ошибка команды thread_id: {e}", exc_info=True)
+        await update.message.reply_text(f"❌ Ошибка получения информации о топике: {e}")
 
 async def safe_log(update, context):
     """Отправляет последние 10 строк лога с очисткой от HTML тегов"""
@@ -286,7 +294,9 @@ def main():
     # CommandHandler('delete_old', delete_old) удален - команда больше не актуальна
     
     application.post_init = notify_start
-    application.run_polling()
+    
+    # КРИТИЧНО: Включаем обработку сообщений в топиках форума
+    application.run_polling(allowed_updates=["message", "edited_message", "channel_post", "edited_channel_post"])
 
 if __name__ == '__main__':
     main()
