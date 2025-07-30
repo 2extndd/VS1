@@ -90,7 +90,8 @@ def main():
     application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
     application.add_handler(CommandHandler('log', log))  # команда для последних 10 строк лога
     application.post_init = notify_start
-    application.run_polling()
+    # Включаем поддержку форум-топиков
+    application.run_polling(allowed_updates=["message", "forum_topic_created", "forum_topic_closed", "forum_topic_reopened"])
 
 if __name__ == '__main__':
     main()
