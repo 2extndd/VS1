@@ -144,11 +144,12 @@ def send_telegram_topic_message(item, thread_id, max_retries=5):
     }
     
     for attempt in range(max_retries):
-        # Используем GET запрос для отправки через URL
-        response = requests.get(url, params=params)
-        logging.info(f"Telegram API GET call: status {response.status_code} for thread_id {thread_id_int}")
+        # Используем POST запрос с данными для надежности
+        response = requests.post(url, data=params, timeout=30)
+        logging.info(f"Telegram API POST call: status {response.status_code} for thread_id {thread_id_int}")
+        logging.info(f"Response text: {response.text[:200]}")  # Логируем ответ для диагностики
         if response.status_code == 200:
-            logging.info(f"Telegram topic notification sent to thread {thread_id_int}")
+            logging.info(f"✅ Telegram topic notification sent to thread {thread_id_int}")
             return True
         elif response.status_code == 400:
             # Проверяем если это ошибка "thread not found"
@@ -305,6 +306,9 @@ def scan_all_topics():
             logging.error(f"Request error for topic '{topic_name}': {e}\nParams: {params}", exc_info=True)
         except Exception as topic_error:
             logging.error(f"Error processing topic '{topic_name}': {topic_error}", exc_info=True)
+        
+        # ВАЖНО: задержка между топиками для избежания 403 ошибок
+        time.sleep(3)
 
 def main():
     handle_restart_flag()
@@ -323,4 +327,4 @@ if __name__ == "__main__":
             break
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
-        time.sleep(5)
+        time.sleep(5)  # Увеличиваем задержку между полными циклами сканирования
