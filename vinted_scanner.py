@@ -92,18 +92,18 @@ async def notify_ban_status(ban_duration, consecutive_errors, is_recovering=Fals
     except Exception as e:
         logging.error(f"Failed to send ban notification: {e}")
 
-def calculate_optimal_delay(topics_count, base_delay_min=3.0, base_delay_max=5.0):
+def calculate_optimal_delay(topics_count, base_delay_min=5.0, base_delay_max=8.0):
     """
-    Максимально консервативные задержки для полной защиты от банов
+    УЛЬТРА консервативные задержки для полной защиты от банов
     """
     if topics_count <= 5:
         return base_delay_min, base_delay_max
     elif topics_count <= 10:
-        return base_delay_min * 0.9, base_delay_max * 0.9
+        return base_delay_min * 1.1, base_delay_max * 1.1
     elif topics_count <= 15:
-        return base_delay_min * 0.8, base_delay_max * 0.8
+        return base_delay_min * 1.2, base_delay_max * 1.2
     else:  # 19+ топиков
-        return base_delay_min * 0.7, base_delay_max * 0.7  # 2.1-3.5 секунды для 19 топиков
+        return base_delay_min * 1.4, base_delay_max * 1.4  # 7-11.2 секунды для 19 топиков
 
 def adaptive_ban_recovery(consecutive_errors):
     """Улучшенная адаптивная система восстановления после банов"""
@@ -187,7 +187,7 @@ def send_slack_message(item_title, item_price, item_url, item_image, item_size="
 
 def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retries=3):
     """
-    Отправляет уведомление о новом товаре в Telegram топик с улучшенной диагностикой
+    Отправляет уведомление о новом товаре в Telegram топик с подробной диагностикой
     
     Args:
         item: словарь с данными товара (title, price, url, image, size)
@@ -195,6 +195,10 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
         topic_name: название топика для логирования
         max_retries: максимальное количество попыток отправки
     """
+    logging.info(f"🚀 Starting send_telegram_topic_message for topic '{topic_name}'")
+    logging.info(f"   - Input thread_id: {thread_id} (type: {type(thread_id)})")
+    logging.info(f"   - Item title: {item.get('title', 'No title')}")
+    
     # Проверяем валидность thread_id
     if not thread_id or not isinstance(thread_id, (int, str)):
         logging.error(f"❌ Invalid thread_id for topic '{topic_name}': {thread_id} (type: {type(thread_id)})")
@@ -204,7 +208,7 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
     if thread_id:
         try:
             thread_id = int(thread_id)
-            logging.info(f"📤 Sending to topic '{topic_name}' → thread_id: {thread_id}")
+            logging.info(f"✅ Valid thread_id for topic '{topic_name}': {thread_id}")
         except (ValueError, TypeError) as e:
             logging.error(f"❌ Cannot convert thread_id to int for topic '{topic_name}': {thread_id} - {e}")
             thread_id = None
@@ -227,19 +231,22 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
     # Добавляем thread_id только если он валидный
     if thread_id:
         params["message_thread_id"] = thread_id
-        logging.info(f"🎯 Attempting to send to thread {thread_id} for topic '{topic_name}'")
+        logging.info(f"🎯 Sending to thread {thread_id} for topic '{topic_name}' with params: {list(params.keys())}")
     else:
         logging.warning(f"⚠️ No valid thread_id for topic '{topic_name}', sending to main chat")
     
     for attempt in range(max_retries):
         try:
+            logging.info(f"📤 Attempt {attempt + 1}/{max_retries} for topic '{topic_name}'")
             response = requests.post(url, data=params, timeout=30)
+            
+            logging.info(f"📨 Telegram API response for topic '{topic_name}': {response.status_code}")
             
             if response.status_code == 200:
                 if thread_id:
-                    logging.info(f"✅ Telegram message sent to thread {thread_id} (topic: '{topic_name}')")
+                    logging.info(f"✅ SUCCESS: Message sent to thread {thread_id} (topic: '{topic_name}')")
                 else:
-                    logging.info(f"✅ Telegram message sent to main chat (topic: '{topic_name}')")
+                    logging.info(f"✅ SUCCESS: Message sent to main chat (topic: '{topic_name}')")
                 return True
                 
             elif response.status_code == 400:
@@ -248,6 +255,7 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
                     error_description = error_data.get("description", "").lower()
                     
                     logging.error(f"❌ Telegram API 400 error for topic '{topic_name}': {error_description}")
+                    logging.error(f"   Full error response: {error_data}")
                     
                     # Если проблема с thread_id, пробуем отправить в основной чат
                     if thread_id and ("thread" in error_description or "message_thread_id" in error_description):
@@ -258,12 +266,15 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
                         if "message_thread_id" in params_main:
                             del params_main["message_thread_id"]
                         
+                        logging.info(f"📤 Fallback attempt: sending to main chat without thread_id")
                         response_main = requests.post(url, data=params_main, timeout=30)
+                        logging.info(f"📨 Fallback response: {response_main.status_code}")
+                        
                         if response_main.status_code == 200:
-                            logging.info(f"✅ Message sent to main chat instead of thread {thread_id} (topic: '{topic_name}')")
+                            logging.info(f"✅ FALLBACK SUCCESS: Message sent to main chat instead of thread {thread_id} (topic: '{topic_name}')")
                             return True
                         else:
-                            logging.error(f"❌ Failed to send to main chat: {response_main.status_code}, {response_main.text}")
+                            logging.error(f"❌ FALLBACK FAILED: {response_main.status_code}, {response_main.text}")
                     
                     # Для других 400 ошибок - прекращаем попытки
                     break
@@ -310,7 +321,7 @@ def send_telegram_topic_message(item, thread_id, topic_name="Unknown", max_retri
         if attempt < max_retries - 1:
             time.sleep(2)  # Пауза между попытками
     
-    logging.error(f"❌ Failed to send message for topic '{topic_name}' after {max_retries} attempts")
+    logging.error(f"❌ FINAL FAILURE: Failed to send message for topic '{topic_name}' after {max_retries} attempts")
     return False
 
 def handle_restart_flag():
@@ -525,7 +536,7 @@ if __name__ == "__main__":
         url = f"https://api.telegram.org/bot{Config.telegram_bot_token}/sendMessage"
         requests.post(url, data={
             "chat_id": Config.telegram_chat_id,
-            "text": f"🚀 **VintedScanner запущен!**\n\n⚡ Безопасный быстрый режим: проверки каждые 30-50 секунд\n🛡️ Полная защита от банов\n📊 19 топиков активно\n\n🕐 Запуск: {datetime.now().strftime('%H:%M:%S')}",
+            "text": f"🚀 **VintedScanner запущен!**\n\n🛡️ Ультра безопасный режим: проверки каждые 90-120 секунд\n� Консервативная защита от банов\n📊 19 топиков активно\n\n🕐 Запуск: {datetime.now().strftime('%H:%M:%S')}",
             "parse_mode": "Markdown"
         }, timeout=10)
     except:
@@ -540,8 +551,8 @@ if __name__ == "__main__":
         except Exception as e:
             logging.error(f"Unexpected error in main loop: {e}", exc_info=True)
         
-        # МАКСИМАЛЬНО БЕЗОПАСНЫЙ БЫСТРЫЙ режим: 30-50 секунд между циклами
-        # Это дает 72-120 проверок в час (в 2 раза быстрее обычного, абсолютно безопасно)
-        quick_delay = random.randint(30, 50)
-        logging.info(f"⚡ Next scan in {quick_delay}s (Safe fast mode: ~100 checks/hour)")
-        time.sleep(quick_delay)
+        # УЛЬТРА БЕЗОПАСНЫЙ режим: 90-120 секунд между циклами (против банов)
+        # Это дает 30-40 проверок в час (очень консервативно, но безопасно)
+        safe_delay = random.randint(90, 120)
+        logging.info(f"🛡️ Next scan in {safe_delay}s (Ultra safe mode: ~35 checks/hour)")
+        time.sleep(safe_delay)
