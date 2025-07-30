@@ -18,35 +18,7 @@ async def safe_send_document(update, context, file_path):
 
 RESTART_FLAG = "bot_restarted.flag"
 
-def load_sent_messages():
-    if os.path.exists("sent_messages.json"):
-        try:
-            with open("sent_messages.json", "r") as f:
-                return json.load(f)
-        except Exception:
-            return []
-    return []
-
-def save_sent_messages(messages):
-    with open("sent_messages.json", "w") as f:
-        json.dump(messages, f)
-
-sent_messages = load_sent_messages()  # [(message_id, timestamp)]
-
-async def delete_old(update, context):
-    chat_id = update.effective_chat.id
-    now = time.time()
-    deleted = 0
-    for msg_id, ts in sent_messages[:]:
-        if now - ts > 300:
-            try:
-                await context.bot.delete_message(chat_id=chat_id, message_id=msg_id)
-                sent_messages.remove((msg_id, ts))
-                deleted += 1
-            except Exception:
-                pass
-    save_sent_messages(sent_messages)
-    await update.message.reply_text(f"Удалено сообщений: {deleted}")
+# Функции для работы с отправленными сообщениями удалены (delete_old команда больше не актуальна)
 
 async def restart(update, context):
     await update.message.reply_text("Перезапуск скрипта...")
@@ -112,7 +84,7 @@ def main():
     application = Application.builder().token(Config.telegram_bot_token).build()
     # application.add_handler(CommandHandler('refresh', refresh))  # удалено
     application.add_handler(CommandHandler('status', status))
-    application.add_handler(CommandHandler('delete_old', delete_old))
+    # CommandHandler('delete_old', delete_old) удален - команда больше не актуальна
     application.add_handler(CommandHandler('threadid', threadid))
     application.add_handler(CommandHandler('restart', restart))
     application.add_handler(CommandHandler('send_log', send_log))  # команда для логов
